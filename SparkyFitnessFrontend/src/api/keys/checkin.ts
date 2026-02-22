@@ -10,6 +10,8 @@ export const checkInKeys = {
     [...checkInKeys.all, 'existingCustom', date] as const,
   mostRecent: (type: string) =>
     [...checkInKeys.all, 'mostRecent', type] as const,
+  customEntries: (categoryId: string, userId?: string) =>
+    [...checkInKeys.all, 'customEntries', categoryId, userId] as const,
 };
 
 export const moodKeys = {
