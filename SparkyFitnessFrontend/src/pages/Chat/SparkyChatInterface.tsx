@@ -50,13 +50,20 @@ const SparkyChatInterface = () => {
     !!userPreferences
   );
 
+<<<<<<< HEAD
   const { mutateAsync: saveMessageToHistory } =
     useSaveMessageMutation(autoClearHistory);
+=======
+  const { mutateAsync: saveMessageToHistory } = useSaveMessageMutation();
+>>>>>>> 81107a42 (refactor(chat): migrated chat to TSQ)
   const { mutateAsync: clearChatHistory } = useClearChatHistoryMutation();
   const { mutateAsync: processUserInput } = useProcessUserInputMutation();
 
   const invalidate = useDiaryInvalidation();
+<<<<<<< HEAD
   const queryClient = useQueryClient();
+=======
+>>>>>>> 81107a42 (refactor(chat): migrated chat to TSQ)
   useEffect(() => {
     if (userPreferences?.auto_clear_history === 'all' && !hasAutoCleared) {
       clearChatHistory('all').catch(() => {});
@@ -255,9 +262,12 @@ const SparkyChatInterface = () => {
             botMessageContent =
               response.response || 'Entry logged successfully!';
             invalidate();
+<<<<<<< HEAD
             queryClient.invalidateQueries({
               queryKey: chatbotKeys.todaysNutrition(todayStr),
             });
+=======
+>>>>>>> 81107a42 (refactor(chat): migrated chat to TSQ)
             break;
           case 'measurement_added':
             botMessageContent =
