@@ -42,7 +42,7 @@ export interface CombinedMeasurement {
   type: 'custom' | 'standard' | 'fasting' | 'stress' | 'exercise';
   display_name: string;
   display_unit?: string;
-  custom_categories?: CustomCategory[];
+  custom_categories?: CustomCategory;
   fasting_type?: string;
   duration_minutes?: number;
   originalId?: string;
