@@ -26,10 +26,6 @@ import ExerciseVarietyScore from './ExerciseVarietyScore';
 import SetPerformanceAnalysisChart from './SetPerformanceAnalysisChart';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import ActivityReportVisualizer from './ActivityReportVisualizer';
-import type {
-  ExerciseDashboardData,
-  ExerciseProgressData,
-} from '@/api/Reports/reportsService';
 import { parseISO } from 'date-fns';
 
 import { formatNumber, formatWeight } from '@/utils/numberFormatting';
@@ -41,6 +37,7 @@ import {
   useAvailableMuscleGroups,
 } from '@/hooks/Exercises/useExerciseSearch';
 import { calculateTotalTonnage, getComparisonDates } from '@/utils/reportUtil';
+import { ExerciseDashboardData, ExerciseProgressData } from '@/types/reports';
 
 interface ExerciseReportsDashboardProps {
   exerciseDashboardData: ExerciseDashboardData | null;

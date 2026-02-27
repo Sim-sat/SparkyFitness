@@ -22,7 +22,7 @@ import {
 } from '@/utils/nutrientUtils';
 import { formatWeight } from '@/utils/numberFormatting';
 import type { UserCustomNutrient } from '@/types/customNutrient';
-import type { DailyFoodEntry as BaseDailyFoodEntry } from '@/api/Reports/reportsService';
+import type { DailyFoodEntry as BaseDailyFoodEntry } from '@/types/reports';
 import {
   CheckInMeasurement,
   CustomCategory,

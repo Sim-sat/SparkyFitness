@@ -1,10 +1,6 @@
 import { EnergyUnit, LoggingLevel } from '@/contexts/PreferencesContext';
 import { toast } from '@/hooks/use-toast';
 import i18n from '@/i18n';
-import {
-  DailyExerciseEntry,
-  DailyFoodEntry,
-} from '@/api/Reports/reportsService';
 import { debug, info, warn, error } from '@/utils/logging';
 
 import { parseISO, subDays, subYears } from 'date-fns';
@@ -18,6 +14,7 @@ import {
   CustomCategory,
   CustomMeasurement,
 } from '@/types/checkin';
+import { DailyExerciseEntry, DailyFoodEntry } from '@/types/reports';
 
 interface StressDataPoint {
   time: string;

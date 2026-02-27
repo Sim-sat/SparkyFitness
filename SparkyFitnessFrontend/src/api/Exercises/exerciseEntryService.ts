@@ -1,12 +1,12 @@
 import { apiCall } from '@/api/api';
 import { getExerciseEntriesForDate as getDailyExerciseEntries } from '@/api/Diary/dailyProgressService';
 import { parseJsonArray } from './exerciseService';
-import type { ExerciseProgressData } from '@/api/Reports/reportsService';
 import type { WorkoutPresetSet } from '@/types/workout';
 import { debug } from '@/utils/logging';
 import { getUserLoggingLevel } from '@/utils/userPreferences';
 import { ExerciseEntry } from '@/types/diary';
 import { GroupedExerciseEntry } from '@/types/exercises';
+import { ExerciseProgressData } from '@/types/reports';
 
 export const fetchExerciseEntries = async (
   selectedDate: string
