@@ -6,7 +6,6 @@ import { Search, Plus, Loader2, Camera, BookText } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { type FatSecretFoodItem } from '@/api/Foods/fatSecret.ts';
 import {
   Select,
   SelectContent,
@@ -19,7 +18,12 @@ import {
   DataProvider,
   getProviderCategory,
 } from '@/api/Settings/externalProviderService';
-import type { Food, CSVData, GlycemicIndex } from '@/types/food';
+import type {
+  Food,
+  CSVData,
+  GlycemicIndex,
+  FatSecretFoodItem,
+} from '@/types/food';
 import type { Meal } from '@/types/meal';
 import { useQueryClient } from '@tanstack/react-query';
 import {

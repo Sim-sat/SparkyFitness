@@ -5,21 +5,6 @@ import type { CSVData, Food, FoodDeletionImpact } from '@/types/food';
 
 export type FoodFilter = 'all' | 'mine' | 'family' | 'public' | 'needs-review';
 
-export interface ExternalDataProvider {
-  id: string;
-  provider_name: string;
-  provider_type:
-    | 'openfoodfacts'
-    | 'nutritionix'
-    | 'fatsecret'
-    | 'wger'
-    | 'mealie'
-    | 'tandoor';
-  app_id: string | null;
-  app_key: string | null;
-  is_active: boolean;
-}
-
 interface FoodPayload {
   name: string;
   brand?: string;
