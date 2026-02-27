@@ -6,7 +6,6 @@ import {
   addExternalExerciseToUserExercises,
   addNutritionixExercise,
   addFreeExerciseDBExercise,
-  Exercise,
   getAvailableEquipment,
   getAvailableMuscleGroups,
   getAvailableExercises,
@@ -19,6 +18,7 @@ import {
 } from '@/api/Settings/externalProviderService';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { Exercise } from '@/types/exercises';
 
 export const internalSearchOptions = (
   query: string,

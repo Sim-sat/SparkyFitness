@@ -16,6 +16,7 @@ export interface ExerciseEntry {
   entry_date: string;
   notes?: string;
   sets?: WorkoutPresetSet[]; // Add sets property
+  image_url?: string;
   exercises: {
     id: string;
     name: string;

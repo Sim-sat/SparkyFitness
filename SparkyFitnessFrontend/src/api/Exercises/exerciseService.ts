@@ -1,6 +1,6 @@
 import { apiCall } from '@/api/api';
-import { Exercise } from './exerciseSearchService';
 import { ExerciseCSVData } from '@/pages/Exercises/ExerciseImportCSV';
+import { Exercise } from '@/types/exercises';
 
 // Helper function to safely parse JSON strings that might be arrays
 export const parseJsonArray = (

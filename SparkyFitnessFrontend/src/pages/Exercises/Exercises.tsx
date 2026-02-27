@@ -45,7 +45,7 @@ import {
   type ExerciseDeletionImpact,
   type ExerciseOwnershipFilter,
 } from '@/api/Exercises/exerciseService';
-import type { Exercise as ExerciseInterface } from '@/api/Exercises/exerciseSearchService';
+import type { Exercise as ExerciseInterface } from '@/types/exercises';
 import WorkoutPresetsManager from './WorkoutPresetsManager';
 import WorkoutPlansManager from '@/pages/Exercises/WorkoutPlansManager';
 import {

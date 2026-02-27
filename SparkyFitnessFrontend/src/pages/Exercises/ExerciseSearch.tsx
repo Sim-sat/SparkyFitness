@@ -12,7 +12,6 @@ import {
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAuth } from '@/hooks/useAuth';
 import { debug, info, warn, error } from '@/utils/logging';
-import { type Exercise } from '@/api/Exercises/exerciseSearchService';
 import {
   Plus,
   Loader2,
@@ -39,6 +38,7 @@ import {
   useAddExerciseMutation,
 } from '@/hooks/Exercises/useExerciseSearch';
 import { useQueryClient } from '@tanstack/react-query';
+import { Exercise } from '@/types/exercises';
 
 interface ExerciseSearchProps {
   onExerciseSelect: (

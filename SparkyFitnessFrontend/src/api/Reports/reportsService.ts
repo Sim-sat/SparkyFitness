@@ -1,11 +1,11 @@
 import { apiCall } from '@/api/api';
-import type { Exercise } from '../Exercises/exerciseSearchService';
 import type { SleepAnalyticsData } from '../../types';
 import {
   CheckInMeasurement,
   CustomCategory,
   CustomMeasurement,
 } from '@/types/checkin';
+import { Exercise } from '@/types/exercises';
 
 export interface NutritionData {
   date: string;

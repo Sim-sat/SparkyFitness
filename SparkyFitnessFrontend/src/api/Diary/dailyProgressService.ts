@@ -1,8 +1,8 @@
 import { apiCall } from '../api';
 import type { FoodEntry } from '@/types/food';
-import type { GroupedExerciseEntry } from '../Exercises/exerciseEntryService';
 import { CheckInMeasurement } from '@/types/checkin';
 import { Goals } from '@/types/diary';
+import { GroupedExerciseEntry } from '@/types/exercises';
 
 export const getGoalsForDate = async (date: string): Promise<Goals> => {
   const params = new URLSearchParams({ date });
