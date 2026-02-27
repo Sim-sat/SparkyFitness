@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAccessibleUsersQuery } from '@/hooks/Auth/useAuth';
 import { error as logError } from '@/utils/logging';
-import { AccessibleUser } from '@/types/food';
+import { AccessibleUser } from '@/types/auth';
 
 interface ActiveUserContextType {
   activeUserId: string | null;

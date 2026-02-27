@@ -297,7 +297,7 @@ export const getActivityDetails = async (
   providerName: string
 ): Promise<ActivityDetailsResponse> => {
   return apiCall(
-    `/api/exercises/activity-details/${exerciseEntryId}/${providerName}`,
+    `/exercises/activity-details/${exerciseEntryId}/${providerName}`,
     {
       method: 'GET',
     }

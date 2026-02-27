@@ -28,7 +28,6 @@ export default tseslint.config(
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
 
-      // Globale Restriktionen
       'no-restricted-imports': [
         'error',
         {
@@ -67,7 +66,6 @@ export default tseslint.config(
     },
   },
   {
-    // Spezialregeln für den API-Ordner
     files: ['src/api/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': 'off',
@@ -75,7 +73,12 @@ export default tseslint.config(
     },
   },
   {
-    // Spezialregeln für Hooks
+    files: ['src/utils/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-globals': 'off',
+    },
+  },
+  {
     files: ['src/hooks/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
@@ -87,13 +90,11 @@ export default tseslint.config(
               message: 'Axios is only allowed in src/api.',
             },
           ],
-          // Erlaube @/api imports hier
         },
       ],
     },
   },
   {
-    // Spezialregeln für Tests
     files: ['src/tests/**/*.{ts,tsx}'],
     rules: {
       'no-restricted-imports': [
