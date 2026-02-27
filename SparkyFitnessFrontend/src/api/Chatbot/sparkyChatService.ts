@@ -14,9 +14,9 @@ import {
 import { processExerciseInput } from '@/api/Chatbot/Chatbot_ExerciseHandler';
 import { processMeasurementInput } from '@/api/Chatbot/Chatbot_MeasurementHandler';
 import { processWaterInput } from '@/api/Chatbot/Chatbot_WaterHandler';
-import { AIService } from '@/api/Settings/aiServiceSettingsService';
 import { CoachResponse, FoodOption } from '@/types/Chatbot_types';
 import { processChatInput } from '@/utils/Chatbot_utils';
+import { AIService } from '@/types/settings';
 
 export interface Message {
   id: string;

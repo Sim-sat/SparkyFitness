@@ -15,10 +15,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import type {
-  AIService,
-  UserPreferences,
-} from '@/api/Settings/aiServiceSettingsService';
+import type { UserPreferences } from '@/api/Settings/aiServiceSettingsService';
 import { useTranslation } from 'react-i18next';
 import { UserChatPreferences } from '@/components/ai/UserChatPreferences';
 import { GlobalOverrideBanner } from '@/components/ai/GlobalOverrideBanner';
@@ -34,6 +31,7 @@ import {
   useUpdateUserAIPreferences,
 } from '@/hooks/AI/useAIServiceSettings';
 import { useUserAiConfigAllowed } from '@/hooks/AI/useUserAiConfigAllowed';
+import { AIService } from '@/types/settings';
 
 const AIServiceSettings = () => {
   const { t } = useTranslation();

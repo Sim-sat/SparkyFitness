@@ -8,10 +8,10 @@ import {
   deleteAIService,
   updateUserPreferences,
   getActiveAiServiceSetting,
-  type AIService,
   type UserPreferences,
 } from '@/api/Settings/aiServiceSettingsService';
 import { aiServiceKeys, userPreferencesKeys } from '@/api/keys/admin';
+import { AIService } from '@/types/settings';
 
 // Query hooks for fetching data
 export const useAIServices = () => {
