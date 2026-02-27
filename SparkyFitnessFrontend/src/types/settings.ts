@@ -1,11 +1,3 @@
-import { BmrAlgorithm } from '@/services/bmrService';
-import { BodyFatAlgorithm } from '@/services/bodyCompositionService';
-import {
-  FatBreakdownAlgorithm,
-  MineralCalculationAlgorithm,
-  VitaminCalculationAlgorithm,
-  SugarCalculationAlgorithm,
-} from '@/types/nutrientAlgorithms';
 export interface AIService {
   id: string;
   service_name: string;

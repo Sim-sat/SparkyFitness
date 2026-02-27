@@ -2,7 +2,6 @@ import { screen, fireEvent, waitFor, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import AIServiceSettings from '@/pages/Settings/AIServiceSettings';
 import { renderWithClient } from '../test-utils';
-import * as aiServiceSettingsService from '@/api/Settings/aiServiceSettingsService';
 import { AIService, UserPreferencesChat } from '@/types/settings';
 
 // Mock react-i18next

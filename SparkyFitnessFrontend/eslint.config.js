@@ -27,6 +27,92 @@ export default tseslint.config(
       ],
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
+
+      // Globale Restriktionen
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'axios',
+              message: 'Axios is only allowed in src/api.',
+            },
+            {
+              name: '@tanstack/react-query',
+              importNames: [
+                'useQuery',
+                'useMutation',
+                'useInfiniteQuery',
+                'useQueries',
+              ],
+              message: 'TanStack Query hooks are only allowed in src/hooks.',
+            },
+          ],
+          patterns: [
+            {
+              group: ['@/api/**'],
+              message:
+                'Direct API imports are only allowed in src/hooks, src/tests, or src/api.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-globals': [
+        'error',
+        {
+          name: 'fetch',
+          message: 'Native fetch is only allowed in src/api.',
+        },
+      ],
+    },
+  },
+  {
+    // Spezialregeln für den API-Ordner
+    files: ['src/api/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': 'off',
+      'no-restricted-globals': 'off',
+    },
+  },
+  {
+    // Spezialregeln für Hooks
+    files: ['src/hooks/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'axios',
+              message: 'Axios is only allowed in src/api.',
+            },
+          ],
+          // Erlaube @/api imports hier
+        },
+      ],
+    },
+  },
+  {
+    // Spezialregeln für Tests
+    files: ['src/tests/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'axios',
+              message: 'Axios is only allowed in src/api.',
+            },
+            {
+              name: '@tanstack/react-query',
+              importNames: ['useQuery', 'useMutation'],
+              message:
+                'Do not use hooks in tests. Mock the API or use renderHook.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
