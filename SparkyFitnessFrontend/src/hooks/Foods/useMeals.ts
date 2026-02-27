@@ -12,20 +12,17 @@ import { MealPayload } from '@/types/meal';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
-export const useMeals = (filter: MealFilter) => {
-  const { t } = useTranslation();
+export const mealSearchOptions = (filter: MealFilter, term?: string) => ({
+  queryKey: mealKeys.filter(filter, term),
+  queryFn: () => getMeals(filter, term),
+  meta: {
+    errorTitle: 'Error',
+    errorMessage: 'Failed to load meals.',
+  },
+});
 
-  return useQuery({
-    queryKey: mealKeys.filter(filter),
-    queryFn: () => getMeals(filter),
-    meta: {
-      errorTitle: t('common.error', 'Error'),
-      errorMessage: t(
-        'mealManagement.failedToLoadMeals',
-        'Failed to load meals.'
-      ),
-    },
-  });
+export const useMeals = (filter: MealFilter, term?: string) => {
+  return useQuery(mealSearchOptions(filter, term));
 };
 
 export const mealDeletionImpactOptions = (mealId: string) => ({

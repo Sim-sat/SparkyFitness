@@ -20,7 +20,7 @@ import {
   PlusCircle,
 } from 'lucide-react';
 import { useState } from 'react';
-import EnhancedFoodSearch from '../../components/EnhancedFoodSearch';
+import EnhancedFoodSearch from '../../components/FoodSearch/FoodSearch';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { debug } from '@/utils/logging';

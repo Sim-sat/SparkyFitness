@@ -6,10 +6,14 @@ import {
 } from '@/api/Diary/foodEntryService';
 import {
   deleteFood,
+  FoodDataForBackend,
   FoodFilter,
   getFoodById,
   getFoodDeletionImpact,
+  getRecentAndTopFoods,
+  importFoodsFromCsv,
   loadFoods,
+  searchDatabaseFoods,
   searchMealieFoods,
   searchTandoorFoods,
   togglePublicSharing,
@@ -244,6 +248,53 @@ export const useMiniNutritionTrendData = (
         'reports.miniNutritionTrendsError',
         'Failed to load nutrition trend data.'
       ),
+    },
+  });
+};
+
+export const useRecentAndTopFoodsQuery = (
+  limit: number,
+  mealType?: string,
+  enabled: boolean = true
+) => {
+  return useQuery({
+    queryKey: foodKeys.recentTop(limit, mealType),
+    queryFn: () => getRecentAndTopFoods(limit, mealType),
+    enabled,
+    meta: {
+      errorMessage: 'Failed to load recent and top foods',
+    },
+  });
+};
+
+export const useDatabaseFoodSearchQuery = (
+  term: string,
+  limit: number,
+  mealType?: string,
+  enabled: boolean = true
+) => {
+  return useQuery({
+    queryKey: foodKeys.databaseSearch(term, limit, mealType),
+    queryFn: () => searchDatabaseFoods(term, limit, mealType),
+    enabled,
+    meta: {
+      errorMessage: 'Failed to search foods',
+    },
+  });
+};
+export const useImportCsvMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (foods: FoodDataForBackend[]) => importFoodsFromCsv(foods),
+    onSuccess: () => {
+      return queryClient.invalidateQueries({
+        queryKey: foodKeys.all,
+      });
+    },
+    meta: {
+      errorMessage: 'Failed to import food data. Please try again.',
+      successMessage: 'Food data imported successfully',
     },
   });
 };

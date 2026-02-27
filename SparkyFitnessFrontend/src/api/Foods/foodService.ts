@@ -1,6 +1,7 @@
+import { OpenFoodFactsProduct } from '@/components/FoodSearch/FoodSearch';
 import { apiCall } from '../api';
 
-import type { Food, FoodDeletionImpact } from '@/types/food';
+import type { CSVData, Food, FoodDeletionImpact } from '@/types/food';
 
 export type FoodFilter = 'all' | 'mine' | 'family' | 'public' | 'needs-review';
 
@@ -174,4 +175,89 @@ export const searchTandoorFoods = async (
     },
   });
   return response || [];
+};
+
+export const getRecentAndTopFoods = async (
+  limit: number,
+  mealType?: string
+) => {
+  const params = new URLSearchParams({ limit: limit.toString() });
+  if (mealType) params.append('mealType', mealType);
+
+  return apiCall(`/foods?${params.toString()}`);
+};
+
+export const searchDatabaseFoods = async (
+  term: string,
+  limit: number,
+  mealType?: string
+) => {
+  const params = new URLSearchParams({
+    name: term,
+    broadMatch: 'true',
+    limit: limit.toString(),
+  });
+  if (mealType) params.append('mealType', mealType);
+
+  return apiCall(`/foods?${params.toString()}`);
+};
+
+export interface OpenFoodFactsSearchResponse {
+  products?: OpenFoodFactsProduct[];
+}
+
+export interface OpenFoodFactsBarcodeResponse {
+  status: number;
+  product?: OpenFoodFactsProduct;
+}
+
+export const searchOpenFoodFactsApi = async (
+  query: string
+): Promise<OpenFoodFactsSearchResponse> => {
+  return apiCall(
+    `/foods/openfoodfacts/search?query=${encodeURIComponent(query)}`
+  );
+};
+
+export const searchOpenFoodFactsBarcodeApi = async (
+  barcode: string
+): Promise<OpenFoodFactsBarcodeResponse> => {
+  return apiCall(`/foods/openfoodfacts/barcode/${barcode}`);
+};
+
+export type FoodDataForBackend = Omit<CSVData, 'id'>;
+
+interface DuplicateError {
+  name: string;
+  brand: string;
+}
+
+interface ImportApiError {
+  status?: number;
+  data?: {
+    duplicates?: DuplicateError[];
+  };
+  message?: string;
+}
+
+export const importFoodsFromCsv = async (
+  foods: FoodDataForBackend[]
+): Promise<void> => {
+  try {
+    await apiCall('/foods/import-from-csv', {
+      method: 'POST',
+      body: JSON.stringify({ foods }),
+    });
+  } catch (error: unknown) {
+    const err = error as ImportApiError;
+    if (err.status === 409 && err.data?.duplicates) {
+      const duplicateList = err.data.duplicates
+        .map((d) => `"${d.name} - ${d.brand}"`)
+        .join(', ');
+      throw new Error(
+        `Import Failed: Duplicate Items Found. The following items already exist: ${duplicateList}. Please remove them from your file and try again.`
+      );
+    }
+    throw error;
+  }
 };
