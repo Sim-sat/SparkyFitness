@@ -62,6 +62,7 @@ import {
   searchUsdaOptions,
   usdaFoodDetailsOptions,
 } from '@/hooks/Foods/useUSDA.ts';
+import { DEFAULT_NUTRIENTS } from '@/constants/nutrients.ts';
 
 interface OpenFoodFactsProduct {
   product_name: string;
@@ -1009,17 +1010,9 @@ const EnhancedFoodSearch = ({
       (p) => p.view_group === 'quick_info' && p.platform === 'desktop'
     );
 
-  const defaultNutrients = [
-    'calories',
-    'protein',
-    'carbs',
-    'fat',
-    'dietary_fiber',
-  ];
-
   const visibleNutrients = quickInfoPreferences
     ? quickInfoPreferences.visible_nutrients
-    : defaultNutrients;
+    : DEFAULT_NUTRIENTS;
 
   return (
     <div className="space-y-4">
