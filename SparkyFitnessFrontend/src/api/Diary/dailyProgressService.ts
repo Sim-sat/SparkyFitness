@@ -12,6 +12,7 @@ import type { FoodEntry } from '@/types/food';
 import type { GroupedExerciseEntry } from '../Exercises/exerciseEntryService';
 
 import type { WorkoutPresetSet } from '@/types/workout';
+import { CheckInMeasurement } from '@/types/checkin';
 
 export interface ExerciseEntry {
   id: string;
@@ -28,17 +29,6 @@ export interface ExerciseEntry {
     category: string;
     calories_per_hour: number;
   } | null;
-}
-
-export interface CheckInMeasurement {
-  entry_date: string;
-  weight?: number;
-  neck?: number;
-  waist?: number;
-  hips?: number;
-  steps?: number;
-  height?: number;
-  body_fat_percentage?: number;
 }
 
 export const getGoalsForDate = async (date: string): Promise<Goals> => {

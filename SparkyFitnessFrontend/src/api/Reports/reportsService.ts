@@ -1,6 +1,11 @@
 import { apiCall } from '@/api/api';
 import type { Exercise } from '../Exercises/exerciseSearchService';
 import type { SleepAnalyticsData } from '../../types';
+import {
+  CheckInMeasurement,
+  CustomCategory,
+  CustomMeasurement,
+} from '@/types/checkin';
 
 export interface NutritionData {
   date: string;
@@ -22,17 +27,6 @@ export interface NutritionData {
   calcium: number;
   iron: number;
   [key: string]: number | string; // Add index signature for custom nutrients
-}
-
-export interface MeasurementData {
-  entry_date: string;
-  weight?: number;
-  neck?: number;
-  waist?: number;
-  hips?: number;
-  steps?: number;
-  height?: number;
-  body_fat_percentage?: number;
 }
 
 export interface DailyFoodEntry {
@@ -131,24 +125,6 @@ export interface ExerciseProgressData {
   }[];
 }
 
-export interface CustomCategory {
-  id: string;
-  name: string;
-  display_name?: string | null;
-  measurement_type: string;
-  frequency: string;
-  data_type: string;
-}
-
-export interface CustomMeasurementData {
-  category_id: string;
-  entry_date: string;
-  hour?: number;
-  value: string | number;
-  notes?: string;
-  timestamp: string;
-}
-
 export const loadReportsData = async (
   startDate: string,
   endDate: string,
@@ -157,9 +133,9 @@ export const loadReportsData = async (
   nutritionData: NutritionData[];
   tabularData: DailyFoodEntry[];
   exerciseEntries: DailyExerciseEntry[];
-  measurementData: MeasurementData[];
+  measurementData: CheckInMeasurement[];
   customCategories: CustomCategory[];
-  customMeasurementsData: Record<string, CustomMeasurementData[]>;
+  customMeasurementsData: Record<string, CustomMeasurement[]>;
   sleepAnalyticsData: SleepAnalyticsData[];
 }> => {
   const params = new URLSearchParams({

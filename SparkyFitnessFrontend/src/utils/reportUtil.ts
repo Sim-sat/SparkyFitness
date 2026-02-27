@@ -2,11 +2,8 @@ import { EnergyUnit, LoggingLevel } from '@/contexts/PreferencesContext';
 import { toast } from '@/hooks/use-toast';
 import i18n from '@/i18n';
 import {
-  CustomCategory,
-  CustomMeasurementData,
   DailyExerciseEntry,
   DailyFoodEntry,
-  MeasurementData,
 } from '@/api/Reports/reportsService';
 import { debug, info, warn, error } from '@/utils/logging';
 
@@ -16,6 +13,11 @@ import {
   getEnergyUnitString,
 } from './nutritionCalculations';
 import { UserCustomNutrient } from '@/types/customNutrient';
+import {
+  CheckInMeasurement,
+  CustomCategory,
+  CustomMeasurement,
+} from '@/types/checkin';
 
 interface StressDataPoint {
   time: string;
@@ -665,7 +667,7 @@ export const exportBodyMeasurements = async ({
   loggingLevel: LoggingLevel;
   startDate: string | null;
   endDate: string | null;
-  measurementData: MeasurementData[];
+  measurementData: CheckInMeasurement[];
   defaultWeightUnit: string;
   defaultMeasurementUnit: string;
   formatDateInUserTimezone: (date: string | Date, formatStr?: string) => string;
@@ -801,7 +803,7 @@ export const exportCustomMeasurement = async ({
   startDate: string | null;
   endDate: string | null;
   category: CustomCategory;
-  customMeasurementsData: Record<string, CustomMeasurementData[]>;
+  customMeasurementsData: Record<string, CustomMeasurement[]>;
   formatDateInUserTimezone: (date: string | Date, formatStr?: string) => string;
 }) => {
   info(
@@ -907,7 +909,7 @@ export const exportCustomMeasurement = async ({
 
 export const formatCustomChartData = (
   category: CustomCategory,
-  data: CustomMeasurementData[],
+  data: CustomMeasurement[],
   loggingLevel: LoggingLevel,
   convertMeasurement: (val: number, from: string, to: string) => number,
   defaultMeasurementUnit: string
@@ -974,7 +976,7 @@ export const formatCustomChartData = (
         }
         return acc;
       },
-      {} as Record<string, CustomMeasurementData>
+      {} as Record<string, CustomMeasurement>
     );
 
     return Object.values(grouped).map((d) => {
