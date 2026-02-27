@@ -40,7 +40,6 @@ import { usePreferences } from '@/contexts/PreferencesContext';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from '@/hooks/use-toast';
 import { info } from '@/utils/logging';
-import EnhancedCustomFoodForm from '@/components/FoodSearch/EnhancedCustomFoodForm';
 import FoodSearchDialog from '@/components/FoodSearch/FoodSearchDialog';
 import FoodUnitSelector from '@/components/FoodUnitSelector';
 import { type FoodFilter } from '@/api/Foods/foodService';
@@ -59,25 +58,15 @@ import {
   getNutrientMetadata,
   formatNutrientValue,
 } from '@/utils/nutrientUtils';
+import EnhancedCustomFoodForm from '@/components/FoodSearch/CustomFoodForm';
 
 const FoodDatabaseManager: React.FC = () => {
   const { t } = useTranslation();
   const { user } = useAuth();
   const { activeUserId } = useActiveUser();
-  const {
-    nutrientDisplayPreferences,
-    loggingLevel,
-    energyUnit,
-    convertEnergy,
-  } = usePreferences();
+  const { nutrientDisplayPreferences, loggingLevel } = usePreferences();
   const isMobile = useIsMobile();
   const platform = isMobile ? 'mobile' : 'desktop';
-
-  const getEnergyUnitString = (unit: 'kcal' | 'kJ' = energyUnit): string => {
-    return unit === 'kcal'
-      ? t('common.kcalUnit', 'kcal')
-      : t('common.kJUnit', 'kJ');
-  };
 
   const quickInfoPreferences =
     nutrientDisplayPreferences.find(
@@ -148,7 +137,7 @@ const FoodDatabaseManager: React.FC = () => {
     setEditingFood(null);
   };
 
-  const handleFoodSelected = (food: Food) => {
+  const handleFoodSelected = () => {
     setShowFoodSearchDialog(false);
   };
 

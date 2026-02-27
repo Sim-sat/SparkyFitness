@@ -2,13 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Loader2, Edit, Camera, BookText } from 'lucide-react';
+import { Search, Plus, Loader2, Camera, BookText } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { debug } from '@/utils/logging';
 import { type FatSecretFoodItem } from '@/api/Foods/fatSecret.ts';
 import {
   Select,
@@ -18,8 +15,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useActiveUser } from '@/contexts/ActiveUserContext';
-import { getProviderCategory } from '@/api/Settings/externalProviderService';
-import type { Food, CSVData } from '@/types/food';
+import {
+  DataProvider,
+  getProviderCategory,
+} from '@/api/Settings/externalProviderService';
+import type { Food, CSVData, GlycemicIndex } from '@/types/food';
 import type { Meal } from '@/types/meal';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -44,12 +44,11 @@ import {
   usdaFoodDetailsOptions,
 } from '@/hooks/Foods/useUSDA.ts';
 import { DEFAULT_NUTRIENTS } from '@/constants/nutrients.ts';
-import { NutrientGrid } from './NutrientGrid.tsx';
 import {
   convertFatSecretToFood,
   convertNutritionixToFood,
+  convertOpenFoodFactsToFood,
   convertUsdaToFood,
-  formatUsdaNutrientsForDisplay,
 } from '@/utils/foodSearch.ts';
 import FoodResultCard from './FoodResultCard.tsx';
 import { BarcodeScannerDialog } from './BarcodeScannerDialog.tsx';
@@ -86,7 +85,57 @@ interface EnhancedFoodSearchProps {
   mealType?: string;
 }
 
+export interface NutritionixItem {
+  id: string;
+  name: string;
+  food_name?: string;
+  brand?: string;
+  brand_name?: string;
+  image?: string;
+  serving_size?: number;
+  serving_unit?: string;
+  calories?: number;
+  protein?: number;
+  carbs?: number;
+  fat?: number;
+  saturated_fat?: number;
+  polyunsaturated_fat?: number;
+  monounsaturated_fat?: number;
+  trans_fat?: number;
+  cholesterol?: number;
+  sodium?: number;
+  potassium?: number;
+  dietary_fiber?: number;
+  sugars?: number;
+  vitamin_a?: number;
+  vitamin_c?: number;
+  calcium?: number;
+  iron?: number;
+  glycemic_index?: GlycemicIndex;
+}
+
+interface UsdaItem {
+  fdcId: number;
+  description: string;
+  brandOwner?: string;
+  foodNutrients: Array<{
+    nutrientName: string;
+    value: number;
+    unitName: string;
+  }>;
+  servingSize?: number;
+  servingSizeUnit?: string;
+}
+
 type FoodDataForBackend = Omit<CSVData, 'id'>;
+
+export type ExternalResultWrapper =
+  | { provider_type: 'openfoodfacts'; raw: OpenFoodFactsProduct; food: Food }
+  | { provider_type: 'nutritionix'; raw: NutritionixItem; food: Food }
+  | { provider_type: 'fatsecret'; raw: FatSecretFoodItem; food: Food }
+  | { provider_type: 'usda'; raw: UsdaItem; food: Food }
+  | { provider_type: 'mealie'; raw: Food; food: Food }
+  | { provider_type: 'tandoor'; raw: Food; food: Food };
 
 const EnhancedFoodSearch = ({
   onFoodSelect,
@@ -99,29 +148,19 @@ const EnhancedFoodSearch = ({
   const {
     defaultFoodDataProviderId,
     setDefaultFoodDataProviderId,
-    loggingLevel,
     itemDisplayLimit,
-    foodDisplayLimit, // Add foodDisplayLimit here
+    foodDisplayLimit,
     nutrientDisplayPreferences,
     energyUnit,
     convertEnergy,
     getEnergyUnitString,
-    autoScaleOpenFoodFactsImports, // Add auto-scale preference
-  } = usePreferences(); // Get loggingLevel, itemDisplayLimit, and foodDisplayLimit
+    autoScaleOpenFoodFactsImports,
+  } = usePreferences();
   const isMobile = useIsMobile();
   const platform = isMobile ? 'mobile' : 'desktop';
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [meals, setMeals] = useState<Meal[]>([]); // New state for meal results
-  const [openFoodFactsResults, setOpenFoodFactsResults] = useState<
-    OpenFoodFactsProduct[]
-  >([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [nutritionixResults, setNutritionixResults] = useState<any[]>([]); // To store Nutritionix search results
-  const [fatSecretResults, setFatSecretResults] = useState<FatSecretFoodItem[]>(
-    []
-  ); // To store FatSe cret search results
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [usdaResults, setUsdaResults] = useState<any[]>([]); // To store USDA search results
+  const [meals, setMeals] = useState<Meal[]>([]);
   const getInitialActiveTab = () => {
     if (!hideDatabaseTab) return 'database';
     if (!hideMealTab) return 'meal';
@@ -136,14 +175,17 @@ const EnhancedFoodSearch = ({
     OpenFoodFactsProduct | Food | null
   >(null);
   const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
-  const [showAddFoodDialog, setShowAddFoodDialog] = useState(false); // New state for Add Food dialog
+  const [showAddFoodDialog, setShowAddFoodDialog] = useState(false);
   const [showImportFromCsvDialog, setShowImportFromCsvDialog] = useState(false);
   const isSearchEmpty = !searchTerm.trim();
   const isDatabaseTab = activeTab === 'database';
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   const [manualProviderId, setManualProviderId] = useState<string | null>(null);
   const [isOnlineLoading, setIsOnlineLoading] = useState(false);
-  const [mealieTandoorResults, setMealieTandoorResults] = useState<Food[]>([]);
+
+  const [externalResults, setExternalResults] = useState<
+    ExternalResultWrapper[]
+  >([]);
 
   const queryClient = useQueryClient();
   const { data: customNutrients } = useCustomNutrients();
@@ -177,18 +219,16 @@ const EnhancedFoodSearch = ({
   const [hasOnlineSearchBeenPerformed, setHasOnlineSearchBeenPerformed] =
     useState(false);
 
-  // Debounce effect for database search
   useEffect(() => {
     const handler = setTimeout(() => {
       if (activeTab === 'meal') {
         handleMealSearch(searchTerm);
       }
-    }, 500); // 500ms debounce delay
+    }, 500);
 
     return () => {
       clearTimeout(handler);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, activeTab]);
 
   const searchOpenFoodFacts = async () => {
@@ -199,12 +239,18 @@ const EnhancedFoodSearch = ({
     );
 
     if (data.products) {
-      setOpenFoodFactsResults(
-        data.products.filter(
+      const mapped: ExternalResultWrapper[] = data.products
+        .filter(
           (p: OpenFoodFactsProduct) =>
             p.product_name && p.nutriments && p.nutriments['energy-kcal_100g']
         )
-      );
+        .map((p: OpenFoodFactsProduct) => ({
+          provider_type: 'openfoodfacts',
+          raw: p,
+          food: convertOpenFoodFactsToFood(p, autoScaleOpenFoodFactsImports),
+        }));
+
+      setExternalResults(mapped);
     }
   };
 
@@ -214,14 +260,24 @@ const EnhancedFoodSearch = ({
     );
 
     if (data.status === 1 && data.product) {
-      setOpenFoodFactsResults([data.product]);
+      const mapped: ExternalResultWrapper = {
+        provider_type: 'openfoodfacts',
+        raw: data.product,
+        food: convertOpenFoodFactsToFood(
+          data.product,
+          autoScaleOpenFoodFactsImports
+        ),
+      };
+
+      setExternalResults([mapped]);
       setActiveTab('online');
+
       toast({
         title: 'Barcode scanned successfully',
         description: `Found product: ${data.product.product_name}`,
       });
     } else {
-      setOpenFoodFactsResults([]);
+      setExternalResults([]);
       toast({
         title: 'Product not found',
         description: 'No product found for this barcode on OpenFoodFacts.',
@@ -236,11 +292,9 @@ const EnhancedFoodSearch = ({
   };
 
   const handleSaveEditedFood = async (foodData: Food) => {
-    // foodData is now the fully saved food from EnhancedCustomFoodForm
     try {
       onFoodSelect(foodData, 'food');
 
-      // Close dialog and clear state
       setShowEditDialog(false);
       setEditingProduct(null);
 
@@ -249,7 +303,6 @@ const EnhancedFoodSearch = ({
         description: `${foodData.name} has been added and is ready to be added to your meal`,
       });
     } catch (error) {
-      console.error('Error handling edited food:', error);
       toast({
         title: 'Error',
         description: 'Failed to process the edited food',
@@ -259,10 +312,8 @@ const EnhancedFoodSearch = ({
   };
 
   const handleImportFromCSV = async (foodDataArray: FoodDataForBackend[]) => {
-    try {
-      await importCsvMutation(foodDataArray);
-      setShowImportFromCsvDialog(false);
-    } catch (error) {}
+    await importCsvMutation(foodDataArray);
+    setShowImportFromCsvDialog(false);
   };
 
   const handleMealSearch = useCallback(
@@ -275,14 +326,79 @@ const EnhancedFoodSearch = ({
     [queryClient]
   );
 
+  const searchHandlers: Record<
+    string,
+    (term: string, providerId: string, provider: DataProvider) => Promise<void>
+  > = {
+    openfoodfacts: async () => {
+      await searchOpenFoodFacts();
+    },
+    nutritionix: async (term, id) => {
+      const data: NutritionixItem[] = await queryClient.fetchQuery(
+        searchNutritionixOptions(term, id)
+      );
+      setExternalResults(
+        data.map((item) => ({
+          provider_type: 'nutritionix',
+          raw: item,
+          food: convertNutritionixToFood(item),
+        }))
+      );
+    },
+    fatsecret: async (term, id) => {
+      const data: FatSecretFoodItem[] = await queryClient.fetchQuery(
+        searchFatSecretOptions(term, id)
+      );
+      setExternalResults(
+        data.map((item) => ({
+          provider_type: 'fatsecret',
+          raw: item,
+          food: convertFatSecretToFood(item, item),
+        }))
+      );
+    },
+    usda: async (term, id) => {
+      const data: UsdaItem[] = await queryClient.fetchQuery(
+        searchUsdaOptions(term, id, foodDisplayLimit)
+      );
+      setExternalResults(
+        data.map((item) => ({
+          provider_type: 'usda',
+          raw: item,
+          food: convertUsdaToFood(item, item),
+        }))
+      );
+    },
+    mealie: async (term, id, p) => {
+      const data: Food[] = await queryClient.fetchQuery(
+        searchMealieOptions(term, p.base_url, p.app_key, id)
+      );
+      setExternalResults(
+        data.map((item) => ({
+          provider_type: 'mealie',
+          raw: item,
+          food: item,
+        }))
+      );
+    },
+    tandoor: async (term, id, p) => {
+      const data: Food[] = await queryClient.fetchQuery(
+        searchTandoorOptions(term, p.base_url, p.app_key, id)
+      );
+      setExternalResults(
+        data.map((item) => ({
+          provider_type: 'tandoor',
+          raw: item,
+          food: item,
+        }))
+      );
+    },
+  };
+
   const handleSearch = async () => {
     setIsOnlineLoading(true);
-    setMealieTandoorResults([]); // Clear previous Mealie/Tandoor results
-    setMeals([]); // Clear previous meal results
-    setOpenFoodFactsResults([]);
-    setNutritionixResults([]);
-    setFatSecretResults([]);
-    setUsdaResults([]); // Clear previous USDA results
+    setExternalResults([]);
+    setMeals([]);
 
     if (!searchTerm.trim()) {
       setIsOnlineLoading(false);
@@ -293,76 +409,20 @@ const EnhancedFoodSearch = ({
       await handleMealSearch(searchTerm);
     } else if (activeTab === 'online') {
       setHasOnlineSearchBeenPerformed(true);
-      if (!selectedFoodDataProvider) {
-        toast({
-          title: 'Error',
-          description: 'Please select a food data provider.',
-          variant: 'destructive',
-        });
-        setIsOnlineLoading(false);
-        return;
-      }
-
       const provider = foodDataProviders.find(
         (p) => p.id === selectedFoodDataProvider
       );
 
-      if (!provider || !selectedFoodDataProvider) {
-        toast({
-          title: 'Error',
-          description: 'Please select a valid food data provider.',
-          variant: 'destructive',
-        });
-        setIsOnlineLoading(false);
-        return;
-      }
-
-      if (provider.provider_type === 'openfoodfacts') {
-        await searchOpenFoodFacts();
-      } else if (provider.provider_type === 'nutritionix') {
-        const results = await queryClient.fetchQuery(
-          searchNutritionixOptions(searchTerm, selectedFoodDataProvider)
+      if (provider && searchHandlers[provider.provider_type]) {
+        await searchHandlers[provider.provider_type](
+          searchTerm,
+          provider.id,
+          provider
         );
-        setNutritionixResults(results);
-      } else if (provider.provider_type === 'fatsecret') {
-        const results = await queryClient.fetchQuery(
-          searchFatSecretOptions(searchTerm, selectedFoodDataProvider)
-        );
-        setFatSecretResults(results);
-      } else if (provider.provider_type === 'mealie') {
-        const results = await queryClient.fetchQuery(
-          searchMealieOptions(
-            searchTerm,
-            provider.base_url,
-            provider.app_key,
-            provider.id
-          )
-        );
-        setMealieTandoorResults(results);
-      } else if (provider.provider_type === 'tandoor') {
-        const results = await queryClient.fetchQuery(
-          searchTandoorOptions(
-            searchTerm,
-            provider.base_url,
-            provider.app_key,
-            provider.id
-          )
-        );
-        setMealieTandoorResults(results);
-      } else if (provider.provider_type === 'usda') {
-        const results = await queryClient.fetchQuery(
-          searchUsdaOptions(
-            searchTerm,
-            selectedFoodDataProvider,
-            foodDisplayLimit
-          )
-        );
-        setUsdaResults(results);
-        debug(loggingLevel, 'USDA Search Results:', results);
       } else {
         toast({
-          title: 'Error',
-          description: 'Selected provider type is not supported for search.',
+          title: t('common.error'),
+          description: 'Provider not supported',
           variant: 'destructive',
         });
       }
@@ -370,14 +430,13 @@ const EnhancedFoodSearch = ({
     setIsOnlineLoading(false);
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleUsdaEdit = async (item: any) => {
+  const handleUsdaEdit = async (item: UsdaItem) => {
     const nutrientData = await queryClient.fetchQuery(
-      usdaFoodDetailsOptions(item.fdcId, selectedFoodDataProvider)
+      usdaFoodDetailsOptions(item.fdcId, selectedFoodDataProvider!)
     );
 
     if (nutrientData) {
-      setEditingProduct(convertUsdaToFood(item, nutrientData)); // Corrected: Convert to Food object here
+      setEditingProduct(convertUsdaToFood(item, nutrientData));
       setShowEditDialog(true);
     } else {
       toast({
@@ -388,23 +447,20 @@ const EnhancedFoodSearch = ({
     }
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleNutritionixEdit = async (item: any) => {
+  const handleNutritionixEdit = async (item: NutritionixItem) => {
     let nutrientData;
     if (item.brand) {
-      // It's a branded item, use nix_item_id to get full details
       nutrientData = await queryClient.fetchQuery(
-        nutritionixBrandedNutrientsOptions(item.id, selectedFoodDataProvider)
+        nutritionixBrandedNutrientsOptions(item.id, selectedFoodDataProvider!)
       );
     } else {
-      // It's a common item, use natural language query
       nutrientData = await queryClient.fetchQuery(
-        nutritionixNaturalNutrientsOptions(item.name, selectedFoodDataProvider)
+        nutritionixNaturalNutrientsOptions(item.name, selectedFoodDataProvider!)
       );
     }
 
     if (nutrientData) {
-      setEditingProduct(convertNutritionixToFood(item, nutrientData)); // Convert to Food object for editing
+      setEditingProduct(convertNutritionixToFood(item, nutrientData));
       setShowEditDialog(true);
     } else {
       toast({
@@ -416,9 +472,8 @@ const EnhancedFoodSearch = ({
   };
 
   const handleFatSecretEdit = async (item: FatSecretFoodItem) => {
-    // Only fetch detailed nutrients when "Edit & Add" is clicked
     const nutrientData = await queryClient.fetchQuery(
-      fatSecretNutrientOptions(item.food_id, selectedFoodDataProvider)
+      fatSecretNutrientOptions(item.food_id, selectedFoodDataProvider!)
     );
 
     if (nutrientData) {
@@ -446,8 +501,6 @@ const EnhancedFoodSearch = ({
       return;
     }
 
-    // Since Mealie and Tandoor search results are already in the `Food` format,
-    // we can directly use the food object for the edit dialog.
     setEditingProduct(food);
     setShowEditDialog(true);
   };
@@ -554,7 +607,6 @@ const EnhancedFoodSearch = ({
             value={selectedFoodDataProvider || ''}
             onValueChange={(value) => {
               setManualProviderId(value);
-              // Optionally, save the new default provider preference
               setDefaultFoodDataProviderId(value);
             }}
           >
@@ -576,8 +628,7 @@ const EnhancedFoodSearch = ({
                 .map((provider) => (
                   <SelectItem key={provider.id} value={provider.id}>
                     {' '}
-                    {/* Use provider.id for value */}
-                    {provider.provider_name} {/* Display provider name */}
+                    {provider.provider_name}{' '}
                   </SelectItem>
                 ))}
             </SelectContent>
@@ -602,7 +653,6 @@ const EnhancedFoodSearch = ({
                 activeUserId={activeUserId}
                 nutrientConfig={nutrientConfig}
                 onCardClick={() => onFoodSelect(food, 'food')}
-                t={t}
               />
             ))}
 
@@ -613,7 +663,6 @@ const EnhancedFoodSearch = ({
                 activeUserId={activeUserId}
                 nutrientConfig={nutrientConfig}
                 onCardClick={() => onFoodSelect(food, 'food')}
-                t={t}
               />
             ))}
 
@@ -655,11 +704,7 @@ const EnhancedFoodSearch = ({
         {!loading &&
           activeTab === 'online' &&
           hasOnlineSearchBeenPerformed &&
-          openFoodFactsResults.length === 0 &&
-          nutritionixResults.length === 0 &&
-          fatSecretResults.length === 0 &&
-          usdaResults.length === 0 &&
-          foods.length === 0 && (
+          externalResults.length === 0 && (
             <div className="text-center py-8 text-gray-500">
               {t(
                 'enhancedFoodSearch.noFoodsFoundOnline',
@@ -669,20 +714,27 @@ const EnhancedFoodSearch = ({
           )}
 
         {activeTab === 'online' &&
-          mealieTandoorResults.length > 0 &&
-          mealieTandoorResults.map((food) => (
+          externalResults.length > 0 &&
+          externalResults.map((result) => (
             <FoodResultCard
-              key={`${food.provider_type}-${food.provider_external_id}`}
-              item={food}
+              key={`${result.provider_type}-${result.food.provider_external_id}`}
+              item={result.food}
               isOnline={true}
-              providerLabel={
-                food.provider_type === 'mealie'
-                  ? t('enhancedFoodSearch.mealie', 'Mealie')
-                  : t('enhancedFoodSearch.tandoor', 'Tandoor')
-              }
+              providerLabel={result.provider_type.toUpperCase()}
               nutrientConfig={nutrientConfig}
-              onEditClick={() => handleMealieOrTandoorEdit(food)}
-              t={t}
+              onEditClick={() => {
+                if (result.provider_type === 'openfoodfacts') {
+                  handleOpenFoodFactsEdit(result.raw);
+                } else if (result.provider_type === 'nutritionix') {
+                  handleNutritionixEdit(result.raw);
+                } else if (result.provider_type === 'fatsecret') {
+                  handleFatSecretEdit(result.raw);
+                } else if (result.provider_type === 'usda') {
+                  handleUsdaEdit(result.raw);
+                } else {
+                  handleMealieOrTandoorEdit(result.raw);
+                }
+              }}
             />
           ))}
 
@@ -694,7 +746,6 @@ const EnhancedFoodSearch = ({
               isMeal={true}
               nutrientConfig={nutrientConfig}
               onCardClick={() => onFoodSelect(meal, 'meal')}
-              t={t}
             />
           ))}
 
@@ -707,258 +758,7 @@ const EnhancedFoodSearch = ({
               activeUserId={activeUserId}
               nutrientConfig={nutrientConfig}
               onCardClick={() => onFoodSelect(food, 'food')}
-              t={t}
             />
-          ))}
-        {activeTab === 'online' &&
-          openFoodFactsResults.length > 0 &&
-          openFoodFactsResults.map((product) => {
-            // Calculate display values based on auto-scaling preference
-            const shouldScale =
-              autoScaleOpenFoodFactsImports &&
-              product.serving_quantity &&
-              product.serving_quantity > 0;
-            const servingSize = shouldScale ? product.serving_quantity! : 100;
-            const scaleFactor = shouldScale ? servingSize / 100 : 1;
-
-            return (
-              <Card
-                key={product.code}
-                className="hover:bg-gray-50 dark:hover:bg-gray-700"
-              >
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-medium">{product.product_name}</h3>
-                        {product.brands && (
-                          <Badge variant="secondary" className="text-xs">
-                            {product.brands.split(',')[0]}
-                          </Badge>
-                        )}
-                        <Badge variant="outline" className="text-xs">
-                          {t(
-                            'enhancedFoodSearch.openFoodFacts',
-                            'OpenFoodFacts'
-                          )}
-                        </Badge>
-                      </div>
-                      <NutrientGrid
-                        food={{
-                          calories: Math.round(
-                            (product.nutriments['energy-kcal_100g'] || 0) *
-                              scaleFactor
-                          ),
-                          protein:
-                            Math.round(
-                              (product.nutriments['proteins_100g'] || 0) *
-                                scaleFactor *
-                                10
-                            ) / 10,
-                          carbs:
-                            Math.round(
-                              (product.nutriments['carbohydrates_100g'] || 0) *
-                                scaleFactor *
-                                10
-                            ) / 10,
-                          fat:
-                            Math.round(
-                              (product.nutriments['fat_100g'] || 0) *
-                                scaleFactor *
-                                10
-                            ) / 10,
-                          dietary_fiber:
-                            Math.round(
-                              (product.nutriments['fiber_100g'] || 0) *
-                                scaleFactor *
-                                10
-                            ) / 10,
-                          // For OpenFoodFacts, GI is not directly available in product.nutriments,
-                          // so we'll display "None" or handle it as a special case.
-                          glycemic_index: 'None',
-                        }}
-                        visibleNutrients={visibleNutrients}
-                        energyUnit={energyUnit}
-                        convertEnergy={convertEnergy}
-                        getEnergyUnitString={getEnergyUnitString}
-                        customNutrients={customNutrients}
-                      />
-                      <p className="text-xs text-gray-500 mt-1">
-                        Per {servingSize}g
-                      </p>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => handleOpenFoodFactsEdit(product)}
-                      className="ml-2"
-                    >
-                      <Edit className="w-4 h-4 mr-1" />
-                      {t('enhancedFoodSearch.editAndAdd', 'Edit & Add')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        {activeTab === 'online' &&
-          nutritionixResults.length > 0 &&
-          nutritionixResults.map((item) => (
-            <Card
-              key={item.id}
-              className="hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-medium">{item.name}</h3>
-                      {item.brand && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.brand}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs">
-                        {t('enhancedFoodSearch.nutritionix', 'Nutritionix')}
-                      </Badge>
-                    </div>
-                    {item.image && (
-                      <img
-                        src={item.image}
-                        alt={item.name}
-                        className="w-16 h-16 object-cover rounded-md mr-4"
-                      />
-                    )}
-                    {item.calories && (
-                      <NutrientGrid
-                        food={item}
-                        visibleNutrients={visibleNutrients}
-                        energyUnit={energyUnit}
-                        convertEnergy={convertEnergy}
-                        getEnergyUnitString={getEnergyUnitString}
-                        customNutrients={customNutrients}
-                      />
-                    )}
-                    {item.serving_size && item.serving_unit && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Per {item.serving_size}
-                        {item.serving_unit}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleNutritionixEdit(item)}
-                    className="ml-2"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    {t('enhancedFoodSearch.editAndAdd', 'Edit & Add')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        {activeTab === 'online' &&
-          fatSecretResults.length > 0 &&
-          fatSecretResults.map((item) => (
-            <Card
-              key={item.food_id}
-              className="hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-medium">{item.food_name}</h3>
-                      {item.brand_name && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.brand_name}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs">
-                        {t('enhancedFoodSearch.fatSecret', 'FatSecret')}
-                      </Badge>
-                    </div>
-                    {item.calories !== undefined &&
-                      item.protein !== undefined &&
-                      item.carbs !== undefined &&
-                      item.fat !== undefined && (
-                        <NutrientGrid
-                          food={item}
-                          visibleNutrients={visibleNutrients}
-                          energyUnit={energyUnit}
-                          convertEnergy={convertEnergy}
-                          getEnergyUnitString={getEnergyUnitString}
-                          customNutrients={customNutrients}
-                        />
-                      )}
-                    {item.serving_size && item.serving_unit && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Per {item.serving_size}
-                        {item.serving_unit}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleFatSecretEdit(item)}
-                    className="ml-2"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    {t('enhancedFoodSearch.editAndAdd', 'Edit & Add')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        {activeTab === 'online' &&
-          usdaResults.length > 0 &&
-          usdaResults.map((item) => (
-            <Card
-              key={item.fdcId}
-              className="hover:bg-gray-50 dark:hover:bg-gray-700"
-            >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h3 className="font-medium">{item.description}</h3>
-                      {item.brandOwner && (
-                        <Badge variant="secondary" className="text-xs">
-                          {item.brandOwner}
-                        </Badge>
-                      )}
-                      <Badge variant="outline" className="text-xs">
-                        {t('enhancedFoodSearch.usda', 'USDA')}
-                      </Badge>
-                    </div>
-                    {item.foodNutrients && (
-                      <NutrientGrid
-                        food={formatUsdaNutrientsForDisplay(item, loggingLevel)}
-                        visibleNutrients={visibleNutrients}
-                        energyUnit={energyUnit}
-                        convertEnergy={convertEnergy}
-                        getEnergyUnitString={getEnergyUnitString}
-                        customNutrients={customNutrients}
-                      />
-                    )}
-                    {item.servingSize && item.servingSizeUnit && (
-                      <p className="text-xs text-gray-500 mt-1">
-                        Per {item.servingSize}
-                        {item.servingSizeUnit}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleUsdaEdit(item)}
-                    className="ml-2"
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    {t('enhancedFoodSearch.editAndAdd', 'Edit & Add')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
           ))}
       </div>
       <FoodFormDialog

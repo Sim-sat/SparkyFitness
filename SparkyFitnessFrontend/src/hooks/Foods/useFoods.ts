@@ -257,12 +257,17 @@ export const useRecentAndTopFoodsQuery = (
   mealType?: string,
   enabled: boolean = true
 ) => {
+  const { t } = useTranslation();
+
   return useQuery({
     queryKey: foodKeys.recentTop(limit, mealType),
     queryFn: () => getRecentAndTopFoods(limit, mealType),
     enabled,
     meta: {
-      errorMessage: 'Failed to load recent and top foods',
+      errorMessage: t(
+        'foodDatabaseManager.failedToLoadRecentAndTopFoods',
+        'Failed to load recent and top foods.'
+      ),
     },
   });
 };
@@ -273,17 +278,24 @@ export const useDatabaseFoodSearchQuery = (
   mealType?: string,
   enabled: boolean = true
 ) => {
+  const { t } = useTranslation();
+
   return useQuery({
     queryKey: foodKeys.databaseSearch(term, limit, mealType),
     queryFn: () => searchDatabaseFoods(term, limit, mealType),
     enabled,
     meta: {
-      errorMessage: 'Failed to search foods',
+      errorMessage: t(
+        'foodDatabaseManager.failedToSearchFoods',
+        'Failed to search foods.'
+      ),
     },
   });
 };
+
 export const useImportCsvMutation = () => {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
 
   return useMutation({
     mutationFn: (foods: FoodDataForBackend[]) => importFoodsFromCsv(foods),
@@ -293,8 +305,14 @@ export const useImportCsvMutation = () => {
       });
     },
     meta: {
-      errorMessage: 'Failed to import food data. Please try again.',
-      successMessage: 'Food data imported successfully',
+      errorMessage: t(
+        'foodDatabaseManager.failedToImportFoodData',
+        'Failed to import food data. Please try again.'
+      ),
+      successMessage: t(
+        'foodDatabaseManager.foodDataImportedSuccessfully',
+        'Food data imported successfully.'
+      ),
     },
   });
 };

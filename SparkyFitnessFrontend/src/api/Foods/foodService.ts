@@ -227,37 +227,11 @@ export const searchOpenFoodFactsBarcodeApi = async (
 
 export type FoodDataForBackend = Omit<CSVData, 'id'>;
 
-interface DuplicateError {
-  name: string;
-  brand: string;
-}
-
-interface ImportApiError {
-  status?: number;
-  data?: {
-    duplicates?: DuplicateError[];
-  };
-  message?: string;
-}
-
 export const importFoodsFromCsv = async (
   foods: FoodDataForBackend[]
 ): Promise<void> => {
-  try {
-    await apiCall('/foods/import-from-csv', {
-      method: 'POST',
-      body: JSON.stringify({ foods }),
-    });
-  } catch (error: unknown) {
-    const err = error as ImportApiError;
-    if (err.status === 409 && err.data?.duplicates) {
-      const duplicateList = err.data.duplicates
-        .map((d) => `"${d.name} - ${d.brand}"`)
-        .join(', ');
-      throw new Error(
-        `Import Failed: Duplicate Items Found. The following items already exist: ${duplicateList}. Please remove them from your file and try again.`
-      );
-    }
-    throw error;
-  }
+  await apiCall('/foods/import-from-csv', {
+    method: 'POST',
+    body: JSON.stringify({ foods }),
+  });
 };

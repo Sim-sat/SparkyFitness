@@ -6,6 +6,7 @@ import { NutrientGrid } from './NutrientGrid';
 import type { Food } from '@/types/food';
 import type { Meal } from '@/types/meal';
 import type { UserCustomNutrient } from '@/types/customNutrient';
+import { useTranslation } from 'react-i18next';
 
 interface NutrientGridConfig {
   visibleNutrients: string[];
@@ -25,7 +26,6 @@ interface FoodResultCardProps {
   nutrientConfig: NutrientGridConfig;
   onCardClick?: () => void;
   onEditClick?: () => void;
-  t: (key: string, fallback: string) => string;
 }
 
 const FoodResultCard = ({
@@ -38,8 +38,8 @@ const FoodResultCard = ({
   nutrientConfig,
   onCardClick,
   onEditClick,
-  t,
 }: FoodResultCardProps) => {
+  const { t } = useTranslation();
   const isFood = !isMeal;
   const foodItem = item as Food;
   const mealItem = item as Meal;
