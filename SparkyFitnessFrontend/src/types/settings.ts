@@ -1,3 +1,11 @@
+import { BmrAlgorithm } from '@/services/bmrService';
+import { BodyFatAlgorithm } from '@/services/bodyCompositionService';
+import {
+  FatBreakdownAlgorithm,
+  MineralCalculationAlgorithm,
+  VitaminCalculationAlgorithm,
+  SugarCalculationAlgorithm,
+} from '@/types/nutrientAlgorithms';
 export interface AIService {
   id: string;
   service_name: string;
@@ -27,4 +35,14 @@ export interface DataProvider {
   is_strictly_private?: boolean;
   base_url?: string;
   app_key: string;
+}
+
+export interface WaterContainer {
+  id: number;
+  user_id: string;
+  name: string;
+  volume: number;
+  unit: 'ml' | 'oz' | 'liter'; // Removed 'cup'
+  is_primary: boolean;
+  servings_per_container: number; // New field
 }
