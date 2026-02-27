@@ -40,11 +40,11 @@ import {
   useUpdateMealMutation,
 } from '@/hooks/Foods/useMeals';
 import { useQueryClient } from '@tanstack/react-query';
-import { mealKeys } from '@/api/keys/meals';
 import {
   getNutrientMetadata,
   formatNutrientValue,
 } from '@/utils/nutrientUtils';
+import { useMealInvalidation } from '@/hooks/useInvalidateKeys';
 
 // This component is now a standalone library for managing meal templates.
 // Interactions with the meal plan calendar are handled by the calendar itself.
@@ -90,6 +90,7 @@ const MealManagement: React.FC = () => {
   const { mutateAsync: deleteMeal } = useDeleteMealMutation();
   const { mutateAsync: updateMeal } = useUpdateMealMutation();
   const queryClient = useQueryClient();
+  const invalidateMeals = useMealInvalidation();
 
   const handleCreateNewMeal = () => {
     setEditingMealId(undefined);
@@ -126,7 +127,7 @@ const MealManagement: React.FC = () => {
 
   const handleMealSave = () => {
     setShowMealBuilderDialog(false);
-    queryClient.invalidateQueries({ queryKey: mealKeys.all });
+    invalidateMeals();
   };
 
   const handleMealCancel = () => {

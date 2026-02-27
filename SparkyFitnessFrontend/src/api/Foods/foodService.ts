@@ -2,7 +2,6 @@ import { OpenFoodFactsProduct } from '@/components/FoodSearch/FoodSearch';
 import { apiCall } from '../api';
 
 import type {
-  CSVData,
   Food,
   FoodDataForBackend,
   FoodDeletionImpact,

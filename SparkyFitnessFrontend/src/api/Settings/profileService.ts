@@ -1,5 +1,5 @@
 import { apiCall } from '@/api/api';
-import { Profile } from '@/pages/Settings/SettingsPage';
+import { Profile } from '@/types/settings';
 
 export interface UpdateProfilePayload {
   full_name: string;

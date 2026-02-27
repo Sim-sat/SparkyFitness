@@ -19,7 +19,6 @@ import {
   updateExerciseShareStatus,
   getExerciseDeletionImpact,
   updateExerciseEntriesSnapshot,
-  ExerciseOwnershipFilter,
   ExercisePayload,
   importExercisesFromJson,
   importExerciseHistory,
@@ -33,6 +32,7 @@ import {
   getExerciseHistory,
   getExerciseProgressData,
 } from '@/api/Exercises/exerciseEntryService';
+import { ExerciseOwnershipFilter } from '@/types/exercises';
 
 // --- Queries ---
 
