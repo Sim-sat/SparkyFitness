@@ -14,10 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useActiveUser } from '@/contexts/ActiveUserContext';
-import {
-  DataProvider,
-  getProviderCategory,
-} from '@/api/Settings/externalProviderService';
+import { getProviderCategory } from '@/api/Settings/externalProviderService';
 import type {
   Food,
   CSVData,
@@ -64,6 +61,7 @@ import {
   searchOpenFoodFactsOptions,
 } from '@/hooks/Foods/useOpenFoodFacts.ts';
 import { mealSearchOptions } from '@/hooks/Foods/useMeals.ts';
+import { DataProvider } from '@/types/settings.ts';
 
 export interface OpenFoodFactsProduct {
   product_name: string;

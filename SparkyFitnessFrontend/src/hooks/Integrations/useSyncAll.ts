@@ -10,8 +10,8 @@ import {
   handleManualSyncPolar,
   handleManualSyncStrava,
   handleManualSync,
-  type DataProvider,
 } from '@/api/Settings/externalProviderService';
+import { DataProvider } from '@/types/settings';
 
 export const useSyncAllMutation = () => {
   const { toast } = useToast();

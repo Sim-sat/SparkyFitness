@@ -15,3 +15,16 @@ export interface AIService {
 export interface UserPreferencesChat {
   auto_clear_history: string;
 }
+
+export interface DataProvider {
+  id: string;
+  name: string;
+  provider_type: string; // e.g., 'wger', 'fatsecret', 'openfoodfacts', 'nutritionix'
+  provider_name: string; // e.g., 'Wger', 'FatSecret' (for display and value)
+  is_active: boolean; // Changed from is_enabled to is_active
+  has_token?: boolean;
+  shared_with_public?: boolean;
+  is_strictly_private?: boolean;
+  base_url?: string;
+  app_key: string;
+}

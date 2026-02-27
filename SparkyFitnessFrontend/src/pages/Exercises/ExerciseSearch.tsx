@@ -21,7 +21,6 @@ import {
   Volume2,
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { type DataProvider } from '@/api/Settings/externalProviderService';
 import { Badge } from '@/components/ui/badge';
 import { Share2, Users } from 'lucide-react';
 import BodyMapFilter from './BodyMapFilter';
@@ -39,6 +38,7 @@ import {
 } from '@/hooks/Exercises/useExerciseSearch';
 import { useQueryClient } from '@tanstack/react-query';
 import { Exercise } from '@/types/exercises';
+import { DataProvider } from '@/types/settings';
 
 interface ExerciseSearchProps {
   onExerciseSelect: (
