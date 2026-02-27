@@ -22,7 +22,6 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import type { AIService } from '@/api/Settings/aiServiceSettingsService';
 import { useSettings, useUpdateSettings } from '@/hooks/Admin/useSettings';
-import { type GlobalSettings } from '@/api/Admin/globalSettingsService';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ServiceForm } from '@/components/ai/ServiceForm';
@@ -35,6 +34,7 @@ import {
   useDeleteGlobalAIService,
 } from '@/hooks/AI/useGlobalAIServiceSettings';
 import { userAiConfigKeys } from '@/api/keys/admin';
+import { GlobalSettings } from '@/types/admin';
 
 const GlobalAISettings = () => {
   const { t } = useTranslation();

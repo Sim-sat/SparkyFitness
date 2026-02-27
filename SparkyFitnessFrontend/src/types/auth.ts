@@ -1,3 +1,5 @@
+import { OidcProvider } from './admin';
+
 export interface AuthResponse {
   userId: string;
   email?: string;
@@ -11,13 +13,6 @@ export interface AuthResponse {
   mfa_email_enabled?: boolean;
   needs_mfa_setup?: boolean;
   mfaToken?: string;
-}
-
-export interface OidcProvider {
-  id: string;
-  display_name: string;
-  logo_url: string;
-  auto_register?: boolean;
 }
 
 export interface LoginSettings {
