@@ -5,10 +5,10 @@ import { GlycemicIndex } from '@/types/food';
 const PROXY_BASE_URL = '/foods/fatsecret'; // Base path for FatSecret proxy endpoints
 
 export interface FatSecretFoodItem {
-  serving_qty: number;
-  carbohydrates: number;
-  name: string;
-  brand: string;
+  serving_qty?: number;
+  carbohydrates?: number;
+  name?: string;
+  brand?: string;
   food_id: string;
   food_name: string;
   brand_name?: string;
