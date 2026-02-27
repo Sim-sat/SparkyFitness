@@ -46,3 +46,42 @@ export interface WaterContainer {
   is_primary: boolean;
   servings_per_container: number; // New field
 }
+
+export interface FamilyAccess {
+  id: string;
+  owner_user_id: string;
+  owner_email?: string; // Added owner_email
+  family_email: string;
+  family_user_id: string;
+  family_user_email?: string; // Added family_user_email
+  access_permissions: {
+    can_manage_diary: boolean;
+    can_view_food_library: boolean;
+    can_view_exercise_library: boolean;
+    can_manage_checkin: boolean; // Added can_manage_checkin
+    can_view_reports: boolean; // Added can_view_reports
+    share_external_providers: boolean;
+  };
+  access_end_date: string | null;
+  is_active: boolean;
+  status: string;
+  created_at: string;
+}
+
+export interface Profile {
+  id: string;
+  full_name: string | null;
+  phone_number: string | null;
+  date_of_birth: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  gender: string | null;
+}
+
+export interface ProfileFormState {
+  full_name: string;
+  phone: string;
+  date_of_birth: string;
+  bio: string;
+  gender: string;
+}

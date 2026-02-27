@@ -41,11 +41,11 @@ import { toast } from '@/hooks/use-toast';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { useAuth } from '@/hooks/useAuth';
 import { error } from '@/utils/logging';
-import {
-  type ExerciseDeletionImpact,
-  type ExerciseOwnershipFilter,
-} from '@/api/Exercises/exerciseService';
-import type { Exercise as ExerciseInterface } from '@/types/exercises';
+import type {
+  ExerciseDeletionImpact,
+  Exercise as ExerciseInterface,
+  ExerciseOwnershipFilter,
+} from '@/types/exercises';
 import WorkoutPresetsManager from './WorkoutPresetsManager';
 import WorkoutPlansManager from '@/pages/Exercises/WorkoutPlansManager';
 import {

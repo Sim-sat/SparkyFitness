@@ -20,8 +20,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, Edit, Trash2, Eye, Filter, Share2, Lock } from 'lucide-react';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { error } from '@/utils/logging';
-import type { Meal, MealFood, MealPayload } from '@/types/meal';
-import { type MealFilter } from '@/api/Foods/meals';
+import type { Meal, MealFilter, MealFood, MealPayload } from '@/types/meal';
 import type { MealDeletionImpact } from '@/types/meal';
 import {
   Select,

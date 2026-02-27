@@ -1,9 +1,13 @@
 import { OpenFoodFactsProduct } from '@/components/FoodSearch/FoodSearch';
 import { apiCall } from '../api';
 
-import type { CSVData, Food, FoodDeletionImpact } from '@/types/food';
-
-export type FoodFilter = 'all' | 'mine' | 'family' | 'public' | 'needs-review';
+import type {
+  CSVData,
+  Food,
+  FoodDataForBackend,
+  FoodDeletionImpact,
+} from '@/types/food';
+import { MealFilter } from '@/types/meal';
 
 interface FoodPayload {
   name: string;
@@ -41,7 +45,7 @@ interface LoadFoodsResponse {
 }
 export const loadFoods = async (
   searchTerm: string,
-  foodFilter: FoodFilter,
+  foodFilter: MealFilter,
   currentPage: number,
   itemsPerPage: number,
   sortBy: string = 'name:asc', // Default sort by name ascending
@@ -210,7 +214,22 @@ export const searchOpenFoodFactsBarcodeApi = async (
   return apiCall(`/foods/openfoodfacts/barcode/${barcode}`);
 };
 
+<<<<<<< HEAD
 export type FoodDataForBackend = Omit<CSVData, 'id'>;
+=======
+interface DuplicateError {
+  name: string;
+  brand: string;
+}
+
+interface ImportApiError {
+  status?: number;
+  data?: {
+    duplicates?: DuplicateError[];
+  };
+  message?: string;
+}
+>>>>>>> 44c96756 (moved rest)
 
 export const importFoodsFromCsv = async (
   foods: FoodDataForBackend[]

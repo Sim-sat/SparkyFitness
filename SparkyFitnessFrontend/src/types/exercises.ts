@@ -82,3 +82,49 @@ export interface Exercise {
   updated_at?: string;
   tags?: string[];
 }
+
+export interface HistoryImportEntry {
+  entry_date: string;
+  id: string;
+  exercise_name: string;
+  preset_name?: string;
+  entry_notes?: string;
+  calories_burned?: number;
+  distance?: number;
+  avg_heart_rate?: number;
+  exercise_category?: string;
+  calories_per_hour?: number;
+  exercise_description?: string;
+  exercise_source?: string;
+  exercise_force?: string;
+  exercise_level?: string;
+  exercise_mechanic?: string;
+  exercise_equipment?: string[];
+  primary_muscles?: string[];
+  secondary_muscles?: string[];
+  instructions?: string[];
+  sets?: {
+    set_number: number;
+    set_type?: string;
+    reps?: number;
+    weight?: number;
+    duration_min?: number;
+    rest_time_sec?: number;
+    notes?: string;
+  }[];
+  activity_details?: unknown[];
+}
+
+export interface ExerciseDeletionImpact {
+  exerciseEntriesCount: number;
+  // server returns counts; normalize to a boolean for backward compatible UI use
+  isUsedByOthers: boolean;
+  otherUserReferences?: number;
+}
+
+export type ExerciseOwnershipFilter =
+  | 'all'
+  | 'own'
+  | 'family'
+  | 'public'
+  | 'needs-review';

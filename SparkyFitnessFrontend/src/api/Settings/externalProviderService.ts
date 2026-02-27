@@ -8,26 +8,6 @@ export const getExternalDataProviders = async (): Promise<DataProvider[]> => {
   });
 };
 
-export const getProviderCategory = (
-  provider: DataProvider
-): ('food' | 'exercise' | 'other')[] => {
-  switch (provider.provider_type.toLowerCase()) {
-    case 'wger':
-    case 'free-exercise-db': // Added free-exercise-db
-      return ['exercise'];
-    case 'fatsecret':
-    case 'openfoodfacts':
-    case 'mealie':
-    case 'tandoor':
-    case 'usda':
-      return ['food'];
-    case 'nutritionix':
-      return ['food', 'exercise'];
-    default:
-      return ['other'];
-  }
-};
-
 export const toggleProviderPublicSharing = async (
   id: string,
   sharedWithPublic: boolean

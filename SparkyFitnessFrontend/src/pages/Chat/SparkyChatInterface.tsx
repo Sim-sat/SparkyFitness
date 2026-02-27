@@ -7,7 +7,6 @@ import { toast } from '@/hooks/use-toast';
 import DOMPurify from 'dompurify';
 import { usePreferences } from '@/contexts/PreferencesContext';
 import { info, warn, error } from '@/utils/logging';
-import { type Message } from '@/api/Chatbot/sparkyChatService';
 import { useActiveAIService } from '@/hooks/AI/useAIServiceSettings';
 import {
   useChatHistoryQuery,
@@ -17,7 +16,7 @@ import {
   useSaveMessageMutation,
   useTodaysNutritionQuery,
 } from '@/hooks/AI/useSparkyChat';
-import { CoachResponse } from '@/types/Chatbot_types';
+import { CoachResponse, Message } from '@/types/Chatbot_types';
 import { useDiaryInvalidation } from '@/hooks/Diary/useDiaryInvalidation';
 import { chatbotKeys } from '@/api/keys/ai';
 import { useQueryClient } from '@tanstack/react-query';

@@ -202,3 +202,19 @@ export interface FatSecretServing {
   calcium?: string;
   iron?: string;
 }
+
+export type FoodDataForBackend = Omit<CSVData, 'id'>;
+
+export interface AccessibleUser {
+  user_id: string;
+  full_name: string | null;
+  email: string | null;
+  permissions: {
+    diary: boolean;
+    checkin: boolean;
+    reports: boolean;
+    food_list: boolean;
+    calorie: boolean;
+  };
+  access_end_date: string | null;
+}

@@ -1,6 +1,7 @@
 import { authClient } from '@/lib/auth-client';
 import type { AuthResponse, LoginSettings } from '@/types/auth';
 import { apiCall } from '../api';
+import { AccessibleUser } from '@/types/food';
 
 export const requestMagicLink = async (email: string): Promise<void> => {
   const { error } = await authClient.signIn.magicLink({
@@ -210,20 +211,6 @@ export const switchUserContext = async (
     body: { targetUserId },
   });
 };
-
-export interface AccessibleUser {
-  user_id: string;
-  full_name: string | null;
-  email: string | null;
-  permissions: {
-    diary: boolean;
-    checkin: boolean;
-    reports: boolean;
-    food_list: boolean;
-    calorie: boolean;
-  };
-  access_end_date: string | null;
-}
 
 export const getAccessibleUsers = async (): Promise<AccessibleUser[]> => {
   const data = await apiCall('/identity/users/accessible-users', {
