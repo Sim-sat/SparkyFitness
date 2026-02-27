@@ -11,3 +11,7 @@ export interface AIService {
   is_public?: boolean; // Indicates if this is a public setting
   source?: 'user' | 'global' | 'environment'; // Indicates the source of the setting
 }
+
+export interface UserPreferencesChat {
+  auto_clear_history: string;
+}

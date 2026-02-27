@@ -15,7 +15,6 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
-import type { UserPreferences } from '@/api/Settings/aiServiceSettingsService';
 import { useTranslation } from 'react-i18next';
 import { UserChatPreferences } from '@/components/ai/UserChatPreferences';
 import { GlobalOverrideBanner } from '@/components/ai/GlobalOverrideBanner';
@@ -31,7 +30,7 @@ import {
   useUpdateUserAIPreferences,
 } from '@/hooks/AI/useAIServiceSettings';
 import { useUserAiConfigAllowed } from '@/hooks/AI/useUserAiConfigAllowed';
-import { AIService } from '@/types/settings';
+import { AIService, UserPreferencesChat } from '@/types/settings';
 
 const AIServiceSettings = () => {
   const { t } = useTranslation();
@@ -64,7 +63,7 @@ const AIServiceSettings = () => {
     [preferencesData?.auto_clear_history]
   );
   const [preferences, setPreferences] =
-    useState<UserPreferences>(defaultPreferences);
+    useState<UserPreferencesChat>(defaultPreferences);
 
   // Update local state when server data changes (user hasn't made local changes)
   // This handles the case where preferences are loaded asynchronously

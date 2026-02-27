@@ -1,9 +1,5 @@
 import { apiCall } from '@/api/api';
-import { AIService } from '@/types/settings';
-
-export interface UserPreferences {
-  auto_clear_history: string;
-}
+import { AIService, UserPreferencesChat } from '@/types/settings';
 
 export const getAIServices = async (): Promise<AIService[]> => {
   try {
@@ -23,7 +19,7 @@ export const getAIServices = async (): Promise<AIService[]> => {
   }
 };
 
-export const getPreferences = async (): Promise<UserPreferences> => {
+export const getPreferences = async (): Promise<UserPreferencesChat> => {
   try {
     const preferences = await apiCall(`/user-preferences`, {
       method: 'GET',
@@ -100,8 +96,8 @@ export const updateAIServiceStatus = async (
 };
 
 export const updateUserPreferences = async (
-  preferences: UserPreferences
-): Promise<UserPreferences> => {
+  preferences: UserPreferencesChat
+): Promise<UserPreferencesChat> => {
   return apiCall(`/user-preferences`, {
     method: 'PUT',
     body: preferences,

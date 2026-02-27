@@ -3,7 +3,7 @@ import '@testing-library/jest-dom';
 import AIServiceSettings from '@/pages/Settings/AIServiceSettings';
 import { renderWithClient } from '../test-utils';
 import * as aiServiceSettingsService from '@/api/Settings/aiServiceSettingsService';
-import { AIService } from '@/types/settings';
+import { AIService, UserPreferencesChat } from '@/types/settings';
 
 // Mock react-i18next
 const translations: Record<string, string> = {
@@ -170,7 +170,7 @@ const mockUserServices: AIService[] = [
   },
 ];
 
-const mockPreferences: aiServiceSettingsService.UserPreferences = {
+const mockPreferences: UserPreferencesChat = {
   auto_clear_history: '7days',
 };
 
