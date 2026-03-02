@@ -2,11 +2,9 @@ import { toast } from '@/hooks/use-toast';
 import * as logging from '@/utils/logging';
 import { getUserLoggingLevel } from '@/utils/userPreferences';
 
-interface ApiCallOptions extends RequestInit {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  body?: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  params?: Record<string, any>;
+interface ApiCallOptions<B = unknown> extends Omit<RequestInit, 'body'> {
+  body?: B;
+  params?: Record<string, string | number | boolean | undefined>;
   suppress404Toast?: boolean; // New option to suppress toast for 404 errors
   externalApi?: boolean;
   isFormData?: boolean; // New option to indicate if the body is FormData
@@ -19,19 +17,20 @@ export const API_BASE_URL = '/api';
 export async function apiCall(
   endpoint: string,
   options?: ApiCallOptions
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const userLoggingLevel = getUserLoggingLevel();
   let url = options?.externalApi ? endpoint : `${API_BASE_URL}${endpoint}`;
 
   if (options?.params) {
-    // Filter out undefined values to prevent them from becoming the string "undefined" in URLSearchParams
-    const definedParams = Object.fromEntries(
-      Object.entries(options.params).filter(([_, v]) => v !== undefined)
-    );
-    const queryParams = new URLSearchParams(definedParams).toString();
-    if (queryParams) {
-      url = `${url}?${queryParams}`;
+    const searchParams = new URLSearchParams();
+    Object.entries(options.params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        searchParams.append(key, String(value));
+      }
+    });
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url = `${url}?${queryString}`;
     }
   }
   const headers: Record<string, string> = {
@@ -52,8 +51,18 @@ export async function apiCall(
 
   // The Authorization header is no longer needed as authentication is handled by httpOnly cookies.
 
+  const {
+    body: rawBody,
+    params,
+    suppress404Toast,
+    externalApi,
+    isFormData,
+    responseType,
+    ...standardInit
+  } = options || {};
+
   const config: RequestInit = {
-    ...options,
+    ...standardInit,
     headers,
   };
 
@@ -69,8 +78,10 @@ export async function apiCall(
     );
     if (!options.isFormData && typeof options.body === 'object') {
       config.body = JSON.stringify(options.body);
+    } else if (typeof rawBody === 'object') {
+      config.body = JSON.stringify(rawBody);
     } else {
-      config.body = options.body;
+      config.body = String(rawBody); // Sicherstellen, dass es ein BodyInit kompatibler Typ ist
     }
   }
 
@@ -88,7 +99,6 @@ export async function apiCall(
     );
 
     if (!response.ok) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let errorData: any;
       const contentType = response.headers.get('content-type');
       if (contentType && contentType.indexOf('application/json') !== -1) {
