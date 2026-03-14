@@ -12,14 +12,11 @@ import {
 import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import ExerciseEntryDisplay from './ExerciseEntryDisplay';
 import { formatMinutesToHHMM } from '@/utils/timeFormatters';
-import {
-  Exercise,
-  ExerciseEntry,
-  GroupedExerciseEntry,
-} from '@/types/exercises';
+import { Exercise, ExerciseEntry, PresetGroupedEntry } from '@/types/exercises';
+import { WorkoutPresetSet } from '@/types/workout';
 
 interface ExercisePresetEntryDisplayProps {
-  presetEntry: GroupedExerciseEntry;
+  presetEntry: PresetGroupedEntry;
   currentUserId: string | undefined;
   handleDelete: (presetEntryId: string) => void; // This is for deleting the preset itself
   handleDeleteExerciseEntry: (entryId: string) => void; // New prop for deleting individual exercise entries
@@ -76,11 +73,6 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
                 {presetEntry.name ||
                   t('exerciseCard.workoutPreset', 'Workout Preset')}
               </span>
-              {presetEntry.exercise_snapshot?.category && (
-                <p className="text-gray-500 text-[0.65rem] uppercase">
-                  {presetEntry.exercise_snapshot.category}
-                </p>
-              )}
             </div>
           </div>
           <div className="flex items-center space-x-1">
@@ -89,7 +81,8 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
                 <div className="text-center">
                   <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
                     {presetEntry.exercises.reduce(
-                      (sum, ex) => sum + (ex.sets?.length || 0),
+                      (sum: number, ex: ExerciseEntry) =>
+                        sum + (ex.sets?.length || 0),
                       0
                     )}
                   </div>
@@ -101,11 +94,12 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
                   <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
                     {formatMinutesToHHMM(
                       presetEntry.exercises.reduce(
-                        (sum, ex) =>
+                        (sum: number, ex: ExerciseEntry) =>
                           sum +
                           (ex.sets
                             ? ex.sets.reduce(
-                                (setSum, set) => setSum + (set.duration || 0),
+                                (setSum: number, set: WorkoutPresetSet) =>
+                                  setSum + (set.duration || 0),
                                 0
                               )
                             : 0),
@@ -119,15 +113,17 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
                 </div>
                 <div className="text-center">
                   <div className="font-bold text-gray-900 dark:text-gray-100 text-sm">
-                    {presetEntry.exercises.filter((ex) => ex.avg_heart_rate)
-                      .length > 0
+                    {presetEntry.exercises.filter(
+                      (ex: ExerciseEntry) => ex.avg_heart_rate
+                    ).length > 0
                       ? Math.round(
                           presetEntry.exercises.reduce(
-                            (sum, ex) => sum + (ex.avg_heart_rate || 0),
+                            (sum: number, ex: ExerciseEntry) =>
+                              sum + (ex.avg_heart_rate || 0),
                             0
                           ) /
                             presetEntry.exercises.filter(
-                              (ex) => ex.avg_heart_rate
+                              (ex: ExerciseEntry) => ex.avg_heart_rate
                             ).length
                         )
                       : 0}
@@ -141,7 +137,8 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
                     {Math.round(
                       convertEnergy(
                         presetEntry.exercises.reduce(
-                          (sum, ex) => sum + (ex.calories_burned || 0),
+                          (sum: number, ex: ExerciseEntry) =>
+                            sum + (ex.calories_burned || 0),
                           0
                         ),
                         'kcal',
@@ -190,7 +187,7 @@ const ExercisePresetEntryDisplay: React.FC<ExercisePresetEntryDisplayProps> = ({
       {isExpanded && (
         <CardContent className="space-y-3 pt-2">
           {presetEntry.exercises && presetEntry.exercises.length > 0 ? (
-            presetEntry.exercises.map((exerciseEntry) => (
+            presetEntry.exercises.map((exerciseEntry: ExerciseEntry) => (
               <ExerciseEntryDisplay
                 key={exerciseEntry.id}
                 exerciseEntry={exerciseEntry}

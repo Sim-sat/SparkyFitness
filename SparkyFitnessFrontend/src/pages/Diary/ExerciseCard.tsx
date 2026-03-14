@@ -35,11 +35,7 @@ import {
 } from '@/hooks/Exercises/useExerciseEntries';
 import { useQueryClient } from '@tanstack/react-query';
 import { exerciseByIdOptions } from '@/hooks/Exercises/useExercises';
-import {
-  Exercise,
-  ExerciseEntry,
-  GroupedExerciseEntry,
-} from '@/types/exercises';
+import { Exercise, ExerciseEntry } from '@/types/exercises';
 
 // New interface for exercises coming from presets, where sets, reps, and weight are guaranteed
 interface PresetExerciseToLog extends Exercise {
@@ -328,9 +324,13 @@ const ExerciseCard = ({
 
     exerciseEntries.forEach((groupedEntry) => {
       const isPreset = groupedEntry.type === 'preset' && groupedEntry.exercises;
-      const items = isPreset ? groupedEntry.exercises! : [groupedEntry];
+      const items: ExerciseEntry[] = isPreset
+        ? groupedEntry.exercises || []
+        : groupedEntry.type === 'individual'
+          ? [groupedEntry]
+          : [];
 
-      items.forEach((entry: ExerciseEntry | GroupedExerciseEntry) => {
+      items.forEach((entry) => {
         // Calories
         const cal = entry.calories_burned;
         if (cal) {
@@ -425,7 +425,7 @@ const ExerciseCard = ({
                 return (
                   <ExerciseEntryDisplay
                     key={entry.id}
-                    exerciseEntry={entry as ExerciseEntry} // Cast to ExerciseEntry
+                    exerciseEntry={entry as unknown as ExerciseEntry}
                     currentUserId={currentUserId}
                     handleEdit={handleEdit}
                     handleDelete={handleDeleteExerciseEntry} // Pass the handler for individual entries

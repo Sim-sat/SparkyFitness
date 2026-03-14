@@ -1,88 +1,117 @@
 import { ActivityDetailKeyValuePair } from '@/components/ExerciseActivityDetailsEditor';
+import {
+  exercisesResponseSchema,
+  exerciseEntriesResponseSchema,
+  exercisePresetEntriesResponseSchema,
+  exerciseEntrySetsResponseSchema,
+  exerciseEntryActivityDetailsResponseSchema,
+} from '@workspace/shared';
 import { WorkoutPresetSet } from './workout';
+import { z } from 'zod';
 
-export interface GroupedExerciseEntry {
-  type: 'individual' | 'preset';
-  id: string; // UUID for individual exercise entry or exercise preset entry
-  created_at: string; // For sorting
-  // Common fields for individual exercise entries
-  exercise_id?: string;
-  duration_minutes?: number;
-  calories_burned?: number;
-  entry_date?: string;
-  notes?: string;
-  workout_plan_assignment_id?: number;
-  image_url?: string;
-  created_by_user_id?: string;
-  exercise_name?: string;
-  calories_per_hour?: number;
-  updated_by_user_id?: string;
-  category?: string;
-  source?: string;
-  source_id?: string;
-  force?: string;
-  level?: string;
-  mechanic?: string;
-  equipment?: string[];
-  primary_muscles?: string[];
-  secondary_muscles?: string[];
-  instructions?: string[];
-  images?: string[];
-  distance?: number;
-  avg_heart_rate?: number;
-  sets?: WorkoutPresetSet[];
-  exercise_snapshot?: Exercise; // Snapshot of exercise details
+/**
+ * Helper to ensure IDs are strings
+ */
+const idSchema = z
+  .union([z.string(), z.number()])
+  .transform((val) => String(val));
 
-  // Fields specific to preset entries
-  workout_preset_id?: number;
-  name?: string; // Name of the preset entry
-  description?: string;
-  // Array of individual exercise entries within this preset
-  exercises?: ExerciseEntry[]; // This will hold the individual exercise entries
-  activity_details?: ActivityDetailKeyValuePair[];
-}
+/**
+ * Strict schema for Exercise
+ */
+export const exerciseSchema = exercisesResponseSchema.extend({
+  id: idSchema,
+  equipment: z.preprocess(
+    (val) => (typeof val === 'string' ? JSON.parse(val) : val),
+    z.array(z.string()).nullish()
+  ),
+  primary_muscles: z.preprocess(
+    (val) => (typeof val === 'string' ? JSON.parse(val) : val),
+    z.array(z.string()).nullish()
+  ),
+  secondary_muscles: z.preprocess(
+    (val) => (typeof val === 'string' ? JSON.parse(val) : val),
+    z.array(z.string()).nullish()
+  ),
+  instructions: z.preprocess(
+    (val) => (typeof val === 'string' ? JSON.parse(val) : val),
+    z.array(z.string()).nullish()
+  ),
+  images: z.preprocess(
+    (val) => (typeof val === 'string' ? JSON.parse(val) : val),
+    z.array(z.string()).nullish()
+  ),
+  created_at: z.string().nullish(),
+  updated_at: z.string().nullish(),
+  description: z.string().nullish(),
+  duration_min: z.number().optional(),
+  tags: z.array(z.string()).optional(),
+});
 
-export interface ExerciseEntry {
-  id: string;
-  exercise_id: string;
-  duration_minutes?: number;
-  calories_burned: number;
-  entry_date: string;
-  notes?: string;
-  sets: WorkoutPresetSet[];
-  image_url?: string;
-  distance?: number;
-  avg_heart_rate?: number;
-  exercise_snapshot: Exercise; // Renamed from 'exercises' to 'exercise_snapshot'
-  activity_details?: ActivityDetailKeyValuePair[]; // New field
-  exercise_preset_entry_id?: string; // New field
-  created_at: string; // Add created_at for sorting
-}
+export type Exercise = z.infer<typeof exerciseSchema>;
 
-export interface Exercise {
-  id: string;
-  source?: string; // e.g., 'manual', 'wger', 'free-exercise-db'
-  source_id?: string; // ID from the external source
-  name: string;
-  force?: string; // e.g., 'static', 'pull', 'push'
-  level?: string; // e.g., 'beginner', 'intermediate', 'expert'
-  mechanic?: string; // e.g., 'isolation', 'compound'
-  equipment?: string[]; // Stored as JSON array of strings
-  primary_muscles?: string[]; // Stored as JSON array of strings
-  secondary_muscles?: string[]; // Stored as JSON array of strings
-  instructions?: string[]; // Stored as JSON array of strings
-  category: string; // e.g., 'strength', 'cardio'
-  images?: string[]; // Stored as JSON array of URLs (local paths after download)
-  calories_per_hour: number;
-  description?: string;
-  duration_min?: number; // Added duration_min
-  user_id?: string;
-  is_custom?: boolean;
-  shared_with_public?: boolean;
-  created_at?: string;
-  updated_at?: string;
-  tags?: string[];
-}
+/**
+ * Strict schema for ExerciseEntry
+ */
+export const exerciseEntrySchema = exerciseEntriesResponseSchema.extend({
+  id: idSchema,
+  exercise_id: idSchema,
+  entry_date: z.string(),
+  created_at: z.string(),
+  updated_at: z.string().optional(),
+  exercise_preset_entry_id: idSchema.optional(),
+  exercise_snapshot: exerciseSchema,
+  sets: z
+    .array(exerciseEntrySetsResponseSchema)
+    .transform((val) => val as unknown as WorkoutPresetSet[]),
+  activity_details: z
+    .array(exerciseEntryActivityDetailsResponseSchema)
+    .optional()
+    .transform((val) => {
+      if (!val) return undefined;
+      return val.map((detail) => ({
+        ...detail,
+        key: detail.detail_type,
+        value:
+          typeof detail.detail_data === 'string'
+            ? detail.detail_data
+            : JSON.stringify(detail.detail_data),
+      })) as ActivityDetailKeyValuePair[];
+    }),
+});
+
+export type ExerciseEntry = z.infer<typeof exerciseEntrySchema>;
+
+/**
+ * Schema for individual entries in grouped response
+ */
+export const individualGroupedEntrySchema = exerciseEntrySchema.extend({
+  type: z.literal('individual'),
+});
+
+export type IndividualGroupedEntry = z.infer<
+  typeof individualGroupedEntrySchema
+>;
+
+/**
+ * Schema for preset entries in grouped response
+ */
+export const presetGroupedEntrySchema =
+  exercisePresetEntriesResponseSchema.extend({
+    type: z.literal('preset'),
+    id: idSchema,
+    workout_preset_id: idSchema,
+    exercises: z.array(exerciseEntrySchema).optional(),
+  });
+
+export type PresetGroupedEntry = z.infer<typeof presetGroupedEntrySchema>;
+
+export const groupedExerciseEntrySchema = z.discriminatedUnion('type', [
+  individualGroupedEntrySchema,
+  presetGroupedEntrySchema,
+]);
+
+export type GroupedExerciseEntry = z.infer<typeof groupedExerciseEntrySchema>;
 
 export interface HistoryImportEntry {
   entry_date: string;
