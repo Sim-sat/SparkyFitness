@@ -39,12 +39,10 @@ router.get('/latest-github', async (req, res) => {
     res.json(latestRelease);
   } catch (error) {
     console.error('Error fetching latest GitHub release:', error);
-    res
-      .status(500)
-      .json({
-        error: 'Failed to fetch latest GitHub release',
-        details: error.message,
-      });
+    res.status(500).json({
+      error: 'Failed to fetch latest GitHub release',
+      details: error.message,
+    });
   }
 });
 

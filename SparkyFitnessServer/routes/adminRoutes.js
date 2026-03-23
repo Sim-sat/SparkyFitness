@@ -216,11 +216,9 @@ router.put('/users/:userId/status', async (req, res, next) => {
         targetUserId: userId,
         newStatus: isActive,
       });
-      res
-        .status(200)
-        .json({
-          message: `User status updated to ${isActive ? 'active' : 'inactive'}.`,
-        });
+      res.status(200).json({
+        message: `User status updated to ${isActive ? 'active' : 'inactive'}.`,
+      });
     } else {
       res
         .status(404)
@@ -305,11 +303,9 @@ router.put('/users/:userId/role', async (req, res, next) => {
       user.email === process.env.SPARKY_FITNESS_ADMIN_EMAIL &&
       role !== 'admin'
     ) {
-      return res
-        .status(403)
-        .json({
-          error: 'Cannot change role of the primary admin user from admin.',
-        });
+      return res.status(403).json({
+        error: 'Cannot change role of the primary admin user from admin.',
+      });
     }
 
     const success = await userRepository.updateUserRole(userId, role);

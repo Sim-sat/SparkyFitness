@@ -110,11 +110,9 @@ router.put(
         'GLOBAL_MFA_SETTING_UPDATED',
         { isMfaMandatory }
       );
-      res
-        .status(200)
-        .json({
-          message: `Global MFA mandatory setting updated to ${isMfaMandatory}.`,
-        });
+      res.status(200).json({
+        message: `Global MFA mandatory setting updated to ${isMfaMandatory}.`,
+      });
     } catch (error) {
       log('error', 'Error updating global MFA mandatory setting:', error);
       next(error);

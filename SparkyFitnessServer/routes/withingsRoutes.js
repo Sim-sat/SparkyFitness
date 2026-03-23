@@ -37,12 +37,10 @@ router.get('/authorize', authMiddleware.authenticate, async (req, res) => {
     res.json({ authUrl: authorizationUrl });
   } catch (error) {
     log('error', `Error initiating Withings authorization: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error initiating Withings authorization',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error initiating Withings authorization',
+      error: error.message,
+    });
   }
 });
 
@@ -109,12 +107,10 @@ router.post('/callback', async (req, res) => {
     }
   } catch (error) {
     log('error', `Error handling Withings OAuth callback: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error handling Withings OAuth callback',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error handling Withings OAuth callback',
+      error: error.message,
+    });
   }
 });
 
@@ -152,12 +148,10 @@ router.post('/sync', authMiddleware.authenticate, async (req, res) => {
     });
   } catch (error) {
     log('error', `Error initiating manual Withings sync: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error initiating manual Withings sync',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error initiating manual Withings sync',
+      error: error.message,
+    });
   }
 });
 
@@ -182,12 +176,10 @@ router.post('/disconnect', authMiddleware.authenticate, async (req, res) => {
       .json({ message: 'Withings account disconnected successfully.' });
   } catch (error) {
     log('error', `Error disconnecting Withings account: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error disconnecting Withings account',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error disconnecting Withings account',
+      error: error.message,
+    });
   }
 });
 

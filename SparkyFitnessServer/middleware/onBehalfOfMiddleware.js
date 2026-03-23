@@ -34,12 +34,10 @@ const onBehalfOfMiddleware = async (req, res, next) => {
           'warn',
           `Unauthorized attempt: User ${req.userId} tried to act on behalf of user ${onBehalfOfUserId} without permission.`
         );
-        return res
-          .status(403)
-          .json({
-            error:
-              'Forbidden: You do not have permission to act on behalf of this user.',
-          });
+        return res.status(403).json({
+          error:
+            'Forbidden: You do not have permission to act on behalf of this user.',
+        });
       }
     } catch (error) {
       log(

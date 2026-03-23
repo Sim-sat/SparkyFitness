@@ -51,12 +51,10 @@ router.post(
             req.originalUserId || req.userId
           );
         if (!hasPermission) {
-          return res
-            .status(403)
-            .json({
-              error:
-                'Forbidden: You do not have permission to manage diary for this user.',
-            });
+          return res.status(403).json({
+            error:
+              'Forbidden: You do not have permission to manage diary for this user.',
+          });
         }
       }
       const newEntry = await foodEntryService.createFoodEntry(

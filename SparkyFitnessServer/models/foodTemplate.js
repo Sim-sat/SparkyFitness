@@ -31,7 +31,8 @@ async function deleteFoodEntriesByTemplateId(
 ) {
   const client = await getClient(userId); // User-specific operation
   try {
-    let query = 'DELETE FROM food_entries WHERE meal_plan_template_id = $1 AND user_id = $2';
+    let query =
+      'DELETE FROM food_entries WHERE meal_plan_template_id = $1 AND user_id = $2';
     const params = [templateId, userId];
 
     // Only delete from today onwards

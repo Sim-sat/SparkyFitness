@@ -258,12 +258,10 @@ router.put('/profiles', authenticate, async (req, res, next) => {
       req.userId,
       req.body
     );
-    res
-      .status(200)
-      .json({
-        message: 'Profile updated successfully.',
-        profile: updatedProfile,
-      });
+    res.status(200).json({
+      message: 'Profile updated successfully.',
+      profile: updatedProfile,
+    });
   } catch (error) {
     // Example of improved error handling
     if (error.constructor.name === 'ForbiddenError') {
@@ -375,11 +373,9 @@ router.post('/update-email', authenticate, async (req, res, next) => {
   try {
     // Security: Email updates must always apply to the authenticated user
     await authService.updateUserEmail(req.authenticatedUserId, newEmail);
-    res
-      .status(200)
-      .json({
-        message: 'Email update initiated. User will need to verify new email.',
-      });
+    res.status(200).json({
+      message: 'Email update initiated. User will need to verify new email.',
+    });
   } catch (error) {
     if (error.constructor.name === 'ConflictError') {
       return res.status(409).json({ error: error.message });
@@ -450,12 +446,10 @@ router.post(
         avatar_url: avatarUrl,
       });
 
-      res
-        .status(200)
-        .json({
-          message: 'Avatar uploaded successfully.',
-          avatar_url: avatarUrl,
-        });
+      res.status(200).json({
+        message: 'Avatar uploaded successfully.',
+        avatar_url: avatarUrl,
+      });
     } catch (error) {
       log('error', 'Error in avatar upload route:', error);
       next(error);

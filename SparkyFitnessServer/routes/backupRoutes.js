@@ -74,13 +74,11 @@ router.post('/manual', authenticate, isAdmin, async (req, res) => {
   try {
     const result = await performBackup(true); // Pass true for manual backup
     if (result.success) {
-      res
-        .status(200)
-        .json({
-          message: result.message || 'Backup completed successfully.',
-          path: result.path,
-          fileName: result.fileName,
-        });
+      res.status(200).json({
+        message: result.message || 'Backup completed successfully.',
+        path: result.path,
+        fileName: result.fileName,
+      });
     } else {
       const errorMessage = result.error
         ? result.error.message || result.error
@@ -92,12 +90,10 @@ router.post('/manual', authenticate, isAdmin, async (req, res) => {
     const errorMessage = error
       ? error.message || error
       : 'Unknown internal server error.';
-    res
-      .status(500)
-      .json({
-        message: 'Internal server error during backup.',
-        error: errorMessage,
-      });
+    res.status(500).json({
+      message: 'Internal server error during backup.',
+      error: errorMessage,
+    });
   }
 });
 
@@ -171,12 +167,10 @@ router.post(
       }
     } catch (error) {
       log('error', 'Error during restore:', error);
-      res
-        .status(500)
-        .json({
-          message: 'Internal server error during restore.',
-          error: error.message,
-        });
+      res.status(500).json({
+        message: 'Internal server error during restore.',
+        error: error.message,
+      });
     } finally {
       // Clean up the uploaded file from temp_uploads if it still exists there
       try {
@@ -252,12 +246,10 @@ router.get('/settings', authenticate, isAdmin, async (req, res) => {
     });
   } catch (error) {
     log('error', 'Error fetching backup settings:', error);
-    res
-      .status(500)
-      .json({
-        message: 'Internal server error fetching backup settings.',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Internal server error fetching backup settings.',
+      error: error.message,
+    });
   }
 });
 
@@ -316,20 +308,16 @@ router.post('/settings', authenticate, isAdmin, async (req, res) => {
 
     // TODO: Re-schedule cron jobs based on new settings
 
-    res
-      .status(200)
-      .json({
-        message: 'Backup settings saved successfully.',
-        settings: updatedSettings,
-      });
+    res.status(200).json({
+      message: 'Backup settings saved successfully.',
+      settings: updatedSettings,
+    });
   } catch (error) {
     log('error', 'Error saving backup settings:', error);
-    res
-      .status(500)
-      .json({
-        message: 'Internal server error saving backup settings.',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Internal server error saving backup settings.',
+      error: error.message,
+    });
   }
 });
 

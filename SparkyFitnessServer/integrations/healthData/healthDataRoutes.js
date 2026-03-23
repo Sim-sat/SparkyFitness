@@ -21,11 +21,9 @@ router.post('/', async (req, res, next) => {
     healthDataArray.push(req.body);
   } else {
     log('error', 'Received unexpected body format:', req.body);
-    return res
-      .status(400)
-      .json({
-        error: 'Invalid request body format. Expected JSON object or array.',
-      });
+    return res.status(400).json({
+      error: 'Invalid request body format. Expected JSON object or array.',
+    });
   }
 
   // Log the incoming health data JSON
@@ -56,12 +54,10 @@ router.post('/sleep/manual_entry', async (req, res, next) => {
   try {
     const { bedtime, wake_time, duration_in_seconds } = req.body;
     if (!bedtime || !wake_time || !duration_in_seconds) {
-      return res
-        .status(400)
-        .json({
-          error:
-            'Missing required fields: bedtime, wake_time, or duration_in_seconds.',
-        });
+      return res.status(400).json({
+        error:
+          'Missing required fields: bedtime, wake_time, or duration_in_seconds.',
+      });
     }
 
     const sleepEntryData = {
@@ -89,11 +85,9 @@ router.get('/data/sleep_entries', async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
-      return res
-        .status(400)
-        .json({
-          error: 'Missing required query parameters: startDate and endDate.',
-        });
+      return res.status(400).json({
+        error: 'Missing required query parameters: startDate and endDate.',
+      });
     }
 
     const sleepEntries =

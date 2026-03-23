@@ -455,11 +455,9 @@ router.get('/search-external', authenticate, async (req, res, next) => {
       .json({ error: 'Search query or filters are required.' });
   }
   if (!providerId || !providerType) {
-    return res
-      .status(400)
-      .json({
-        error: 'Provider ID and Type are required for external search.',
-      });
+    return res.status(400).json({
+      error: 'Provider ID and Type are required for external search.',
+    });
   }
   try {
     const result = await exerciseService.searchExternalExercises(
@@ -972,11 +970,9 @@ router.post('/import-json', authenticate, async (req, res, next) => {
   try {
     const { exercises } = req.body;
     if (!exercises || !Array.isArray(exercises)) {
-      return res
-        .status(400)
-        .json({
-          error: 'Invalid data format. Expected an array of exercises.',
-        });
+      return res.status(400).json({
+        error: 'Invalid data format. Expected an array of exercises.',
+      });
     }
     const result = await exerciseService.importExercisesFromJson(
       req.userId,
@@ -1414,11 +1410,9 @@ router.get(
     const uuidRegex =
       /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!exerciseEntryId || !uuidRegex.test(exerciseEntryId)) {
-      return res
-        .status(400)
-        .json({
-          error: 'Exercise Entry ID is required and must be a valid UUID.',
-        });
+      return res.status(400).json({
+        error: 'Exercise Entry ID is required and must be a valid UUID.',
+      });
     }
     try {
       const garminDetails =
@@ -1427,11 +1421,9 @@ router.get(
           exerciseEntryId
         );
       if (!garminDetails) {
-        return res
-          .status(404)
-          .json({
-            error: 'Garmin activity details not found for this exercise entry.',
-          });
+        return res.status(404).json({
+          error: 'Garmin activity details not found for this exercise entry.',
+        });
       }
       res.status(200).json(garminDetails);
     } catch (error) {
@@ -1496,11 +1488,9 @@ router.get(
     const uuidRegex =
       /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!exerciseEntryId || !uuidRegex.test(exerciseEntryId)) {
-      return res
-        .status(400)
-        .json({
-          error: 'Exercise Entry ID is required and must be a valid UUID.',
-        });
+      return res.status(400).json({
+        error: 'Exercise Entry ID is required and must be a valid UUID.',
+      });
     }
     if (!providerName) {
       return res.status(400).json({ error: 'Provider name is required.' });
@@ -1513,11 +1503,9 @@ router.get(
           providerName
         );
       if (!activityDetails) {
-        return res
-          .status(404)
-          .json({
-            error: `Activity details not found for this exercise entry and provider: ${providerName}.`,
-          });
+        return res.status(404).json({
+          error: `Activity details not found for this exercise entry and provider: ${providerName}.`,
+        });
       }
       res.status(200).json(activityDetails);
     } catch (error) {

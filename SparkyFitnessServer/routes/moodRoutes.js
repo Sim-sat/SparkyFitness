@@ -132,12 +132,10 @@ router.get('/', authenticate, async (req, res, next) => {
         req.authenticatedUserId || req.userId
       );
       if (!hasPermission) {
-        return res
-          .status(403)
-          .json({
-            error:
-              "Forbidden: You do not have permission to access this user's mood data.",
-          });
+        return res.status(403).json({
+          error:
+            "Forbidden: You do not have permission to access this user's mood data.",
+        });
       }
     }
 
@@ -223,12 +221,10 @@ router.get('/date/:entryDate', authenticate, async (req, res, next) => {
         req.authenticatedUserId || req.userId
       );
       if (!hasPermission) {
-        return res
-          .status(403)
-          .json({
-            error:
-              "Forbidden: You do not have permission to access this user's mood data.",
-          });
+        return res.status(403).json({
+          error:
+            "Forbidden: You do not have permission to access this user's mood data.",
+        });
       }
     }
 

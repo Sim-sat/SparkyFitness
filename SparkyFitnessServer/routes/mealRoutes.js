@@ -103,11 +103,9 @@ router.get('/plan', authenticate, async (req, res, next) => {
   try {
     const { startDate, endDate } = req.query;
     if (!startDate || !endDate) {
-      return res
-        .status(400)
-        .json({
-          error: 'startDate and endDate are required for meal plan retrieval.',
-        });
+      return res.status(400).json({
+        error: 'startDate and endDate are required for meal plan retrieval.',
+      });
     }
     const mealPlanEntries = await mealService.getMealPlanEntries(
       req.userId,
@@ -789,12 +787,10 @@ router.post('/create-meal-from-diary', authenticate, async (req, res, next) => {
   try {
     const { date, mealType, mealName, description, isPublic } = req.body;
     if (!date || !mealType) {
-      return res
-        .status(400)
-        .json({
-          error:
-            'Date and mealType are required to create a meal from diary entries.',
-        });
+      return res.status(400).json({
+        error:
+          'Date and mealType are required to create a meal from diary entries.',
+      });
     }
     const newMeal = await mealService.createMealFromDiaryEntries(
       req.userId,

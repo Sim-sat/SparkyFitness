@@ -558,12 +558,10 @@ router.post('/unlink', authenticate, async (req, res, next) => {
         provider.id,
         userId
       );
-      res
-        .status(200)
-        .json({
-          success: true,
-          message: 'Garmin Connect account unlinked successfully.',
-        });
+      res.status(200).json({
+        success: true,
+        message: 'Garmin Connect account unlinked successfully.',
+      });
     } else {
       res
         .status(400)

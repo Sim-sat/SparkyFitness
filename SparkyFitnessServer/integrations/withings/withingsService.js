@@ -393,7 +393,7 @@ async function fetchMeasuresData(userId, startDate, endDate) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;
@@ -471,7 +471,7 @@ async function fetchHeartData(userId, startDate, endDate) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;
@@ -552,7 +552,7 @@ async function fetchSleepData(userId, startDate, endDate) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;
@@ -632,7 +632,7 @@ async function fetchSleepSummaryData(userId, startDate, endDate) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;
@@ -702,7 +702,7 @@ async function fetchActivityData(userId, startDateYMD, endDateYMD) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;
@@ -765,7 +765,7 @@ async function fetchWorkoutsData(userId, startDateYMD, endDateYMD) {
   const client = await getClient(userId);
   try {
     const providerResult = await client.query(
-      'SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = \'withings\'',
+      "SELECT external_user_id FROM external_data_providers WHERE user_id = $1 AND provider_type = 'withings'",
       [userId]
     );
     const withingsUserId = providerResult.rows[0].external_user_id;

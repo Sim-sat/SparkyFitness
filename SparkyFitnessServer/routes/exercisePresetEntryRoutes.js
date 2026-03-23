@@ -245,11 +245,9 @@ router.delete('/:id', isAuthenticated, async (req, res, next) => {
         req.userId
       );
     if (!deleted) {
-      return res
-        .status(404)
-        .json({
-          message: 'Exercise preset entry not found or not authorized.',
-        });
+      return res.status(404).json({
+        message: 'Exercise preset entry not found or not authorized.',
+      });
     }
 
     res.status(204).send();

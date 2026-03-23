@@ -46,12 +46,10 @@ router.get('/authorize', authMiddleware.authenticate, async (req, res) => {
     res.json({ authUrl: authorizationUrl });
   } catch (error) {
     log('error', `Error initiating Polar authorization: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error initiating Polar authorization',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error initiating Polar authorization',
+      error: error.message,
+    });
   }
 });
 
@@ -114,12 +112,10 @@ router.post('/callback', authMiddleware.authenticate, async (req, res) => {
     }
   } catch (error) {
     log('error', `Error handling Polar OAuth callback: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error handling Polar OAuth callback',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error handling Polar OAuth callback',
+      error: error.message,
+    });
   }
 });
 
@@ -168,12 +164,10 @@ router.post('/sync', authMiddleware.authenticate, async (req, res) => {
       .json({ message: 'Polar data sync completed successfully.' });
   } catch (error) {
     log('error', `Error initiating manual Polar sync: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error initiating manual Polar sync',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error initiating manual Polar sync',
+      error: error.message,
+    });
   }
 });
 
@@ -212,12 +206,10 @@ router.post('/disconnect', authMiddleware.authenticate, async (req, res) => {
       .json({ message: 'Polar account disconnected successfully.' });
   } catch (error) {
     log('error', `Error disconnecting Polar account: ${error.message}`);
-    res
-      .status(500)
-      .json({
-        message: 'Error disconnecting Polar account',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error disconnecting Polar account',
+      error: error.message,
+    });
   }
 });
 

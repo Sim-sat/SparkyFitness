@@ -577,11 +577,9 @@ router.get('/:id', authenticate, async (req, res, next) => {
   const uuidRegex =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!id || !uuidRegex.test(id)) {
-    return res
-      .status(400)
-      .json({
-        error: 'Exercise Entry ID is required and must be a valid UUID.',
-      });
+    return res.status(400).json({
+      error: 'Exercise Entry ID is required and must be a valid UUID.',
+    });
   }
   try {
     const entry = await exerciseService.getExerciseEntryById(req.userId, id);
@@ -713,11 +711,9 @@ router.put(
     const uuidRegex =
       /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
     if (!id || !uuidRegex.test(id)) {
-      return res
-        .status(400)
-        .json({
-          error: 'Exercise Entry ID is required and must be a valid UUID.',
-        });
+      return res.status(400).json({
+        error: 'Exercise Entry ID is required and must be a valid UUID.',
+      });
     }
 
     if (req.file) {
@@ -815,11 +811,9 @@ router.get('/progress/:exerciseId', authenticate, async (req, res, next) => {
     return res.status(400).json({ error: 'Exercise ID is required.' });
   }
   if (!startDate || !endDate) {
-    return res
-      .status(400)
-      .json({
-        error: 'Start date and end date are required for progress data.',
-      });
+    return res.status(400).json({
+      error: 'Start date and end date are required for progress data.',
+    });
   }
 
   try {
@@ -875,11 +869,9 @@ router.delete('/:id', authenticate, async (req, res, next) => {
   const uuidRegex =
     /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
   if (!id || !uuidRegex.test(id)) {
-    return res
-      .status(400)
-      .json({
-        error: 'Exercise Entry ID is required and must be a valid UUID.',
-      });
+    return res.status(400).json({
+      error: 'Exercise Entry ID is required and must be a valid UUID.',
+    });
   }
   try {
     const result = await exerciseService.deleteExerciseEntry(req.userId, id);

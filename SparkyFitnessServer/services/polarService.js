@@ -155,7 +155,7 @@ async function syncPolarData(
               values: [providerId, userId],
             }
           : {
-              text: 'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'polar\'',
+              text: "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'polar'",
               values: [userId],
             };
 
@@ -342,7 +342,7 @@ async function syncPolarData(
             values: [providerId, userId],
           }
         : {
-            text: 'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'polar\'',
+            text: "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'polar'",
             values: [userId],
           };
 

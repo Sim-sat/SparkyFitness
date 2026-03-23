@@ -111,7 +111,7 @@ async function syncStravaData(
       const client = await getSystemClient();
       try {
         await client.query(
-          'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'strava\'',
+          "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'strava'",
           [userId]
         );
       } finally {
@@ -222,7 +222,7 @@ async function syncStravaData(
     const client = await getSystemClient();
     try {
       await client.query(
-        'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'strava\'',
+        "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'strava'",
         [userId]
       );
     } finally {

@@ -175,12 +175,10 @@ router.get('/family-access', authenticate, async (req, res, next) => {
   try {
     const authenticatedUserId = req.userId;
     if (!authenticatedUserId) {
-      return res
-        .status(401)
-        .json({
-          error: 'Unauthorized',
-          message: 'Authenticated user ID not found.',
-        });
+      return res.status(401).json({
+        error: 'Unauthorized',
+        message: 'Authenticated user ID not found.',
+      });
     }
 
     const entries =
@@ -252,12 +250,10 @@ router.post('/family-access', authenticate, async (req, res, next) => {
     !entryData.family_email ||
     !entryData.access_permissions
   ) {
-    return res
-      .status(400)
-      .json({
-        error:
-          'Family User ID, Family Email, and Access Permissions are required.',
-      });
+    return res.status(400).json({
+      error:
+        'Family User ID, Family Email, and Access Permissions are required.',
+    });
   }
 
   try {

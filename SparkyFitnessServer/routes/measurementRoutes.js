@@ -148,11 +148,9 @@ router.get(
   async (req, res, next) => {
     const paramResult = DateParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { date } = paramResult.data;
     const { userId } = req.query;
@@ -231,11 +229,9 @@ router.post(
   async (req, res, next) => {
     const bodyResult = UpsertWaterIntakeBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { entry_date, change_drinks, container_id, user_id } =
       bodyResult.data;
@@ -296,11 +292,9 @@ router.get(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     try {
@@ -369,20 +363,16 @@ router.put(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     const bodyResult = UpdateWaterIntakeBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const updateData = bodyResult.data;
     try {
@@ -433,11 +423,9 @@ router.delete(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     try {
@@ -512,11 +500,9 @@ router.post(
   async (req, res, next) => {
     const bodyResult = UpsertCheckInBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { entry_date, ...measurements } = bodyResult.data;
     try {
@@ -562,11 +548,9 @@ router.get(
   async (req, res, next) => {
     const queryResult = DateParamSchema.safeParse(req.query);
     if (!queryResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: queryResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: queryResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { date } = queryResult.data;
     try {
@@ -623,11 +607,9 @@ router.get(
   async (req, res, next) => {
     const paramResult = DateParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { date } = paramResult.data;
     const { userId } = req.query; // Check query param
@@ -716,20 +698,16 @@ router.put(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     const bodyResult = UpdateCheckInBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { entry_date, ...updateData } = bodyResult.data;
     if (!entry_date) {
@@ -745,12 +723,9 @@ router.put(
         );
 
       if (!existingMeasurement || existingMeasurement.id !== id) {
-        return res
-          .status(404)
-          .json({
-            error:
-              'Check-in measurement not found or not authorized to update.',
-          });
+        return res.status(404).json({
+          error: 'Check-in measurement not found or not authorized to update.',
+        });
       }
 
       const updatedMeasurement =
@@ -802,11 +777,9 @@ router.delete(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     try {
@@ -911,11 +884,9 @@ router.post(
   async (req, res, next) => {
     const bodyResult = CreateCustomCategoryBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     try {
       const newCategory = await measurementService.createCustomCategory(
@@ -987,11 +958,9 @@ router.post(
   async (req, res, next) => {
     const bodyResult = UpsertCustomEntryBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     try {
       const newEntry = await measurementService.upsertCustomMeasurementEntry(
@@ -1035,11 +1004,9 @@ router.delete(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     try {
@@ -1111,20 +1078,16 @@ router.put(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     const bodyResult = UpdateCustomCategoryBodySchema.safeParse(req.body);
     if (!bodyResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: bodyResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: bodyResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const updateData = bodyResult.data;
     try {
@@ -1175,11 +1138,9 @@ router.delete(
   async (req, res, next) => {
     const paramResult = UuidParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { id } = paramResult.data;
     try {
@@ -1232,11 +1193,9 @@ router.get(
   async (req, res, next) => {
     const paramResult = DateParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { date } = paramResult.data;
     try {
@@ -1337,11 +1296,9 @@ router.get(
   async (req, res, next) => {
     const paramResult = DateRangeParamSchema.safeParse(req.params);
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { startDate, endDate } = paramResult.data;
     try {
@@ -1402,11 +1359,9 @@ router.get(
       req.params
     );
     if (!paramResult.success) {
-      return res
-        .status(400)
-        .json({
-          error: paramResult.error.issues.map((i) => i.message).join(', '),
-        });
+      return res.status(400).json({
+        error: paramResult.error.issues.map((i) => i.message).join(', '),
+      });
     }
     const { categoryId, startDate, endDate } = paramResult.data;
     try {

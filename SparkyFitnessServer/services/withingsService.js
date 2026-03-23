@@ -101,7 +101,7 @@ async function syncWithingsData(userId, syncType = 'manual') {
       const client = await getSystemClient();
       try {
         await client.query(
-          'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'withings\'',
+          "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'withings'",
           [userId]
         );
       } finally {
@@ -239,7 +239,7 @@ async function syncWithingsData(userId, syncType = 'manual') {
     const client = await getSystemClient();
     try {
       await client.query(
-        'UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = \'withings\'',
+        "UPDATE external_data_providers SET last_sync_at = NOW() WHERE user_id = $1 AND provider_type = 'withings'",
         [userId]
       );
     } finally {

@@ -38,11 +38,9 @@ router.get('/withings/data', authenticate, async (req, res) => {
     const { startDate, endDate } = req.query; // Expecting YYYY-MM-DD format
 
     if (!startDate || !endDate) {
-      return res
-        .status(400)
-        .json({
-          message: 'startDate and endDate are required query parameters.',
-        });
+      return res.status(400).json({
+        message: 'startDate and endDate are required query parameters.',
+      });
     }
 
     // Fetch weight from check_in_measurements
@@ -102,12 +100,10 @@ router.get('/withings/data', authenticate, async (req, res) => {
       'error',
       `Error retrieving Withings data for user ${req.user.id}: ${error.message}`
     );
-    res
-      .status(500)
-      .json({
-        message: 'Error retrieving Withings data',
-        error: error.message,
-      });
+    res.status(500).json({
+      message: 'Error retrieving Withings data',
+      error: error.message,
+    });
   }
 });
 

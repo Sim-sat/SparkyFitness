@@ -32,7 +32,7 @@ async function endFast(id, userId, endTime, durationMinutes, startTime) {
       setParts.push(`start_time = $${idx++}`);
       values.push(startTime);
     }
-    setParts.push('status = \'COMPLETED\'');
+    setParts.push("status = 'COMPLETED'");
     setParts.push('updated_at = NOW()');
 
     const whereIdPos = idx++;

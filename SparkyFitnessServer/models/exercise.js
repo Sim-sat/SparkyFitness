@@ -235,7 +235,7 @@ async function getDistinctEquipment() {
   const client = await getSystemClient();
   try {
     const result = await client.query(
-      'SELECT equipment FROM exercises WHERE equipment IS NOT NULL AND equipment <> \'[]\' AND equipment <> \'\''
+      "SELECT equipment FROM exercises WHERE equipment IS NOT NULL AND equipment <> '[]' AND equipment <> ''"
     );
     const equipmentSet = new Set();
     result.rows.forEach((row) => {
@@ -267,7 +267,7 @@ async function getDistinctMuscleGroups() {
   const client = await getSystemClient();
   try {
     const result = await client.query(
-      'SELECT primary_muscles, secondary_muscles FROM exercises WHERE (primary_muscles IS NOT NULL AND primary_muscles <> \'[]\' AND primary_muscles <> \'\') OR (secondary_muscles IS NOT NULL AND secondary_muscles <> \'[]\' AND secondary_muscles <> \'\')'
+      "SELECT primary_muscles, secondary_muscles FROM exercises WHERE (primary_muscles IS NOT NULL AND primary_muscles <> '[]' AND primary_muscles <> '') OR (secondary_muscles IS NOT NULL AND secondary_muscles <> '[]' AND secondary_muscles <> '')"
     );
     const muscleGroupSet = new Set();
 

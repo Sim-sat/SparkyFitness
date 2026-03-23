@@ -10,7 +10,10 @@
   },
   "lint-staged": {
     "SparkyFitnessFrontend/**/*.{ts,tsx}": [
-      "npx prettier --write"
+      "pnpm run format"
+    ],
+    "SparkyFitnessServer/**/*.{ts,tsx}": [
+      "pnpm run format"
     ]
   },
   "pnpm": {

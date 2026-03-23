@@ -34,12 +34,10 @@ router.get('/', authenticate, async (req, res, next) => {
   const targetUserId = userId || req.userId;
 
   if (!targetUserId || !startDate || !endDate) {
-    return res
-      .status(400)
-      .json({
-        error:
-          'Target User ID (explicit or context), start date, and end date are required.',
-      });
+    return res.status(400).json({
+      error:
+        'Target User ID (explicit or context), start date, and end date are required.',
+    });
   }
 
   // Permission check only if explicit userId is provided that is different from req.userId
@@ -51,12 +49,10 @@ router.get('/', authenticate, async (req, res, next) => {
         req.authenticatedUserId || req.userId
       );
     if (!hasPermission) {
-      return res
-        .status(403)
-        .json({
-          error:
-            'Forbidden: You do not have permission to view reports for this user.',
-        });
+      return res.status(403).json({
+        error:
+          'Forbidden: You do not have permission to view reports for this user.',
+      });
     }
   }
 
@@ -106,11 +102,9 @@ router.get('/mini-nutrition-trends', authenticate, async (req, res, next) => {
   const targetUserId = userId || req.userId;
 
   if (!targetUserId || !startDate || !endDate) {
-    return res
-      .status(400)
-      .json({
-        error: 'Target User ID, start date, and end date are required.',
-      });
+    return res.status(400).json({
+      error: 'Target User ID, start date, and end date are required.',
+    });
   }
 
   // Permission check if explicit userId provided
@@ -122,12 +116,10 @@ router.get('/mini-nutrition-trends', authenticate, async (req, res, next) => {
         req.authenticatedUserId || req.userId
       );
     if (!hasPermission) {
-      return res
-        .status(403)
-        .json({
-          error:
-            'Forbidden: You do not have permission to view reports for this user.',
-        });
+      return res.status(403).json({
+        error:
+          'Forbidden: You do not have permission to view reports for this user.',
+      });
     }
   }
 
@@ -180,11 +172,9 @@ router.get(
     const targetUserId = userId || req.userId;
 
     if (!targetUserId || !startDate || !endDate) {
-      return res
-        .status(400)
-        .json({
-          error: 'Target User ID, start date, and end date are required.',
-        });
+      return res.status(400).json({
+        error: 'Target User ID, start date, and end date are required.',
+      });
     }
 
     // Permission check if explicit userId provided
@@ -196,12 +186,10 @@ router.get(
           req.authenticatedUserId || req.userId
         );
       if (!hasPermission) {
-        return res
-          .status(403)
-          .json({
-            error:
-              'Forbidden: You do not have permission to view reports for this user.',
-          });
+        return res.status(403).json({
+          error:
+            'Forbidden: You do not have permission to view reports for this user.',
+        });
       }
     }
 
@@ -261,11 +249,9 @@ router.get('/exercise-dashboard', authenticate, async (req, res, next) => {
   const targetUserId = userId || req.userId;
 
   if (!targetUserId || !startDate || !endDate) {
-    return res
-      .status(400)
-      .json({
-        error: 'Target User ID, start date, and end date are required.',
-      });
+    return res.status(400).json({
+      error: 'Target User ID, start date, and end date are required.',
+    });
   }
 
   // Permission check if explicit userId provided
@@ -277,12 +263,10 @@ router.get('/exercise-dashboard', authenticate, async (req, res, next) => {
         req.authenticatedUserId || req.userId
       );
     if (!hasPermission) {
-      return res
-        .status(403)
-        .json({
-          error:
-            'Forbidden: You do not have permission to view reports for this user.',
-        });
+      return res.status(403).json({
+        error:
+          'Forbidden: You do not have permission to view reports for this user.',
+      });
     }
   }
 

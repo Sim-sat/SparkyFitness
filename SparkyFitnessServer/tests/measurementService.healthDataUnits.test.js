@@ -365,17 +365,15 @@ describe('processMobileHealthData aggregated types', () => {
   });
 
   it('reuses existing custom category instead of creating a new one', async () => {
-    measurementRepository.getCustomCategories = jest
-      .fn()
-      .mockResolvedValue([
-        {
-          id: 'cat-existing',
-          name: 'running_speed_avg',
-          measurement_type: 'm/s',
-          frequency: 'Daily',
-          data_type: 'numeric',
-        },
-      ]);
+    measurementRepository.getCustomCategories = jest.fn().mockResolvedValue([
+      {
+        id: 'cat-existing',
+        name: 'running_speed_avg',
+        measurement_type: 'm/s',
+        frequency: 'Daily',
+        data_type: 'numeric',
+      },
+    ]);
 
     const mobileData = [
       {

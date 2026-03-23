@@ -54,11 +54,9 @@ router.get(
     try {
       const { startDate, endDate, userId } = req.query;
       if (!startDate || !endDate) {
-        return res
-          .status(400)
-          .json({
-            error: 'Missing required query parameters: startDate and endDate.',
-          });
+        return res.status(400).json({
+          error: 'Missing required query parameters: startDate and endDate.',
+        });
       }
 
       const targetUserId = userId || req.userId;
@@ -130,12 +128,10 @@ router.post(
         stage_events,
       } = req.body;
       if (!entry_date || !bedtime || !wake_time || !duration_in_seconds) {
-        return res
-          .status(400)
-          .json({
-            error:
-              'Missing required fields: entry_date, bedtime, wake_time, or duration_in_seconds.',
-          });
+        return res.status(400).json({
+          error:
+            'Missing required fields: entry_date, bedtime, wake_time, or duration_in_seconds.',
+        });
       }
 
       const sleepEntryData = {
@@ -199,11 +195,9 @@ router.get(
     try {
       const { startDate, endDate, userId } = req.query;
       if (!startDate || !endDate) {
-        return res
-          .status(400)
-          .json({
-            error: 'Missing required query parameters: startDate and endDate.',
-          });
+        return res.status(400).json({
+          error: 'Missing required query parameters: startDate and endDate.',
+        });
       }
 
       const targetUserId = userId || req.userId;
@@ -216,12 +210,10 @@ router.get(
           req.userId
         );
         if (!hasPermission) {
-          return res
-            .status(403)
-            .json({
-              error:
-                "Forbidden: You do not have permission to access this user's sleep data",
-            });
+          return res.status(403).json({
+            error:
+              "Forbidden: You do not have permission to access this user's sleep data",
+          });
         }
       }
 
@@ -273,11 +265,9 @@ router.get(
     try {
       const { startDate, endDate, userId } = req.query;
       if (!startDate || !endDate) {
-        return res
-          .status(400)
-          .json({
-            error: 'Missing required query parameters: startDate and endDate.',
-          });
+        return res.status(400).json({
+          error: 'Missing required query parameters: startDate and endDate.',
+        });
       }
 
       const targetUserId = userId || req.userId;
@@ -290,12 +280,10 @@ router.get(
           req.userId
         );
         if (!hasPermission) {
-          return res
-            .status(403)
-            .json({
-              error:
-                "Forbidden: You do not have permission to access this user's sleep data",
-            });
+          return res.status(403).json({
+            error:
+              "Forbidden: You do not have permission to access this user's sleep data",
+          });
         }
       }
 

@@ -27,11 +27,9 @@ const checkPermissionMiddleware = (permissionType) => {
           'warn',
           `Forbidden: User ${req.originalUserId} attempted to access ${permissionType} for user ${req.userId} without permission.`
         );
-        return res
-          .status(403)
-          .json({
-            error: `Forbidden: You do not have permission to access ${permissionType} for this user.`,
-          });
+        return res.status(403).json({
+          error: `Forbidden: You do not have permission to access ${permissionType} for this user.`,
+        });
       }
     } catch (error) {
       log(

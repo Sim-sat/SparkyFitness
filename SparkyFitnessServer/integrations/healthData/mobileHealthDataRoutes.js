@@ -18,11 +18,9 @@ router.post('/mobile_data', async (req, res, next) => {
       'Received unexpected body format for mobile health data:',
       req.body
     );
-    return res
-      .status(400)
-      .json({
-        error: 'Invalid request body format. Expected JSON object or array.',
-      });
+    return res.status(400).json({
+      error: 'Invalid request body format. Expected JSON object or array.',
+    });
   }
 
   log(
