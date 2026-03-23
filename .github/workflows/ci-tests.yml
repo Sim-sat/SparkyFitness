@@ -162,6 +162,9 @@ jobs:
         run: pnpm run lint
         continue-on-error: true
 
+      - name: Run Format check
+        run: pnpm format
+
       - name: Run tests with coverage
         run: pnpm run test:ci
         env:
