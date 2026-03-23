@@ -10,21 +10,18 @@ import { CALORIE_CALCULATION_CONSTANTS } from '@workspace/shared';
 
 export const convertStepsToCalories = (
   steps: number,
-  weightKg: number = CALORIE_CALCULATION_CONSTANTS.DEFAULT_WEIGHT_KG,
-  heightCm: number = CALORIE_CALCULATION_CONSTANTS.DEFAULT_HEIGHT_CM
+  weightKg: number = 70,
+  heightCm: number = 175
 ): number => {
-  // Stride length estimation
-  const strideLengthM =
-    (heightCm * CALORIE_CALCULATION_CONSTANTS.STRIDE_LENGTH_MULTIPLIER) / 100;
+  // Stride length estimation (average multiplier 0.414)
+  const strideLengthM = (heightCm * 0.414) / 100;
   const distanceKm = (steps * strideLengthM) / 1000;
 
   // Net calories burned per km is approx 0.39 - 0.45 kcal/kg above BMR
-  // We use a conservative "background" movement estimate
-  return Math.round(
-    distanceKm *
-      weightKg *
-      CALORIE_CALCULATION_CONSTANTS.NET_CALORIES_PER_KG_PER_KM
-  );
+  // We use 0.4 for a conservative "background" movement estimate
+  const netCaloriesPerKgPerKm = 0.4;
+
+  return Math.round(distanceKm * weightKg * netCaloriesPerKgPerKm);
 };
 
 export const estimateStepsFromWalkingExercise = (

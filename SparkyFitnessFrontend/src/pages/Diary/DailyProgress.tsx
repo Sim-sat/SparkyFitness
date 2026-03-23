@@ -120,8 +120,8 @@ const DailyProgress = ({ selectedDate }: { selectedDate: string }) => {
   const backgroundSteps = Math.max(0, dailySteps - activitySteps);
   const backgroundStepCalories = convertStepsToCalories(
     backgroundSteps,
-    weight || CALORIE_CALCULATION_CONSTANTS.DEFAULT_WEIGHT_KG,
-    height || CALORIE_CALCULATION_CONSTANTS.DEFAULT_HEIGHT_CM
+    weight || 70,
+    height || 175
   );
 
   const resolved = resolveExerciseCalories(

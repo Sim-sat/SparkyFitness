@@ -58,23 +58,14 @@ async function getDashboardStats(userId, date) {
     const stepsCount = parseInt(checkInMeasurements?.steps || 0);
     const backgroundSteps = Math.max(0, stepsCount - activitySteps);
 
-    let weightKg =
-      parseFloat(latestMeasurements?.weight) ||
-      CALORIE_CALCULATION_CONSTANTS.DEFAULT_WEIGHT_KG;
-    let heightCm =
-      parseFloat(latestMeasurements?.height) ||
-      CALORIE_CALCULATION_CONSTANTS.DEFAULT_HEIGHT_CM;
+    let weightKg = parseFloat(latestMeasurements?.weight) || 70;
+    let heightCm = parseFloat(latestMeasurements?.height) || 175;
 
     // Distance-based step calorie calculation (Net calories above BMR)
     // Formula matches frontend: steps * stride_length * weight * 0.4
-    const strideLengthM =
-      (heightCm * CALORIE_CALCULATION_CONSTANTS.STRIDE_LENGTH_MULTIPLIER) / 100;
-    const distanceKm = (backgroundSteps * strideLengthM) / 1000;
-    const backgroundStepCalories = Math.round(
-      distanceKm *
-        weightKg *
-        CALORIE_CALCULATION_CONSTANTS.NET_CALORIES_PER_KG_PER_KM,
-    );
+    const strideLengthM = (heightCm * 0.414) / 100;
+    const distanceKm = (stepsCount * strideLengthM) / 1000;
+    const stepsCalories = Math.round(distanceKm * weightKg * 0.4);
 
     // 5. BMR & Activity Baselines
     let bmr = 0;
@@ -120,7 +111,7 @@ async function getDashboardStats(userId, date) {
     // 1. Device total "Active Calories" (which includes steps + workouts)
     // 2. Individual workouts + background steps
     // We take whichever is larger.
-    const workoutPlusSteps = otherCalories + backgroundStepCalories;
+    const workoutPlusSteps = otherCalories + stepsCalories;
     const exerciseCalories = activeCalories >= workoutPlusSteps 
       ? activeCalories 
       : workoutPlusSteps;

@@ -3,7 +3,7 @@ const { log } = require('../config/logging');
 
 const PRESET_ENTRY_SELECT = `
   SELECT id, user_id, workout_preset_id, name, description, entry_date, created_at,
-         updated_at, created_by_user_id, notes, source
+         updated_at, created_by_user_id, notes, source, steps
   FROM exercise_preset_entries
 `;
 
@@ -18,8 +18,8 @@ async function getExercisePresetEntryByIdWithClient(client, id, userId) {
 
 async function createExercisePresetEntryWithClient(client, userId, entryData, createdByUserId) {
   const result = await client.query(
-    `INSERT INTO exercise_preset_entries (user_id, workout_preset_id, name, description, entry_date, created_by_user_id, notes, source)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+    `INSERT INTO exercise_preset_entries (user_id, workout_preset_id, name, description, entry_date, created_by_user_id, notes, source, steps)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
     [
       userId,
       entryData.workout_preset_id ?? null,
@@ -29,6 +29,7 @@ async function createExercisePresetEntryWithClient(client, userId, entryData, cr
       createdByUserId,
       entryData.notes ?? null,
       entryData.source ?? 'manual',
+      entryData.steps ?? null,
     ]
   );
 
@@ -97,6 +98,7 @@ async function updateExercisePresetEntryWithClient(client, id, userId, updateDat
         : existingEntry.entry_date,
     notes: updateData.notes !== undefined ? updateData.notes : existingEntry.notes,
     source: updateData.source !== undefined ? updateData.source : existingEntry.source,
+    steps: updateData.steps !== undefined ? updateData.steps : existingEntry.steps,
   };
 
   const result = await client.query(
@@ -107,8 +109,9 @@ async function updateExercisePresetEntryWithClient(client, id, userId, updateDat
        entry_date = $4,
        notes = $5,
        source = $6,
+       steps = $7,
        updated_at = now()
-     WHERE id = $7 AND user_id = $8
+     WHERE id = $8 AND user_id = $9
      RETURNING id`,
     [
       mergedEntry.workout_preset_id,
@@ -117,6 +120,7 @@ async function updateExercisePresetEntryWithClient(client, id, userId, updateDat
       mergedEntry.entry_date,
       mergedEntry.notes,
       mergedEntry.source,
+      mergedEntry.steps,
       id,
       userId,
     ]
