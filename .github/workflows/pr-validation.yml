@@ -1,0 +1,204 @@
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    name: Validate PR Requirements
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check PR Description
+        id: check_description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            const prTitle = context.payload.pull_request.title || '';
+            
+            // Get changed files to detect what type of changes were made
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+            });
+            
+            const changedFiles = files.map(f => f.filename);
+            const hasFrontendChanges = changedFiles.some(f => f.startsWith('SparkyFitnessFrontend/') || f.startsWith('src/'));
+            const hasBackendChanges = changedFiles.some(f => f.startsWith('SparkyFitnessServer/'));
+            const hasMobileChanges = changedFiles.some(f => f.startsWith('SparkyFitnessMobile/'));
+            const hasUIChanges = changedFiles.some(f => 
+              f.match(/\.(tsx|jsx|css|scss)$/) && 
+              (f.includes('components/') || f.includes('screens/') || f.includes('pages/'))
+            );
+            
+            // Check if this is marked as a new feature
+            const isNewFeature = prBody.includes('[x] New Feature') || prBody.includes('[X] New Feature');
+            
+            let errors = [];
+            let warnings = [];
+            
+            // MANDATORY - ALL: Integrity & License
+            const hasIntegrityCheck = prBody.includes('[x] **[MANDATORY - ALL] Integrity & License**') || 
+                                     prBody.includes('[X] **[MANDATORY - ALL] Integrity & License**');
+            
+            if (!hasIntegrityCheck) {
+              errors.push('❌ **MANDATORY**: You must check the "Integrity & License" checkbox. This certifies your contribution is your own work and free of malicious code.');
+            }
+            
+            // MANDATORY for new feature: Alignment
+            if (isNewFeature) {
+              const hasAlignmentCheck = prBody.includes('[x] **[MANDATORY for new feature] Alignment**') || 
+                                       prBody.includes('[X] **[MANDATORY for new feature] Alignment**');
+              
+              if (!hasAlignmentCheck) {
+                errors.push('❌ **MANDATORY for new features**: You must check the "Alignment" checkbox confirming this feature was discussed in a GitHub issue and approved by maintainers.');
+              }
+            }
+            
+            // MANDATORY for Frontend changes: Quality checks
+            if (hasFrontendChanges) {
+              const hasQualityCheck = prBody.includes('[x] **[MANDATORY for Frontend changes] Quality**') || 
+                                     prBody.includes('[X] **[MANDATORY for Frontend changes] Quality**');
+              
+              if (!hasQualityCheck) {
+                errors.push('❌ **MANDATORY for Frontend changes**: You must check the "Quality" checkbox confirming you ran `pnpm run validate` in SparkyFitnessFrontend/.');
+              }
+            }
+            
+            // MANDATORY for Backend changes: Code Quality (TypeScript, Zod, Tests)
+            if (hasBackendChanges) {
+              const hasCodeQualityCheck = prBody.includes('[x] **[MANDATORY for Backend changes] Code Quality**') || 
+                                         prBody.includes('[X] **[MANDATORY for Backend changes] Code Quality**');
+              
+              if (!hasCodeQualityCheck) {
+                errors.push('❌ **MANDATORY for Backend changes**: You must check the "Code Quality" checkbox confirming:\n  - New backend files use TypeScript\n  - New endpoints have Zod schemas for validation\n  - New endpoints include tests');
+              }
+            }
+            
+            // MANDATORY for UI changes: Screenshots
+            if (hasUIChanges) {
+              const hasScreenshotsCheck = prBody.includes('[x] **[MANDATORY for UI changes] Screenshots**') || 
+                                         prBody.includes('[X] **[MANDATORY for UI changes] Screenshots**');
+              
+              if (!hasScreenshotsCheck) {
+                warnings.push('⚠️ **MANDATORY for UI changes**: You should check the "Screenshots" checkbox and include before/after screenshots below.');
+              }
+              
+              // Check if screenshots section has content
+              const hasBeforeSection = prBody.toLowerCase().includes('### before');
+              const hasAfterSection = prBody.toLowerCase().includes('### after');
+              const hasImages = prBody.includes('![') || prBody.includes('<img') || prBody.includes('http');
+              
+              if (hasScreenshotsCheck && (!hasBeforeSection || !hasAfterSection || !hasImages)) {
+                warnings.push('⚠️ You checked the Screenshots box, but the "Before" and "After" sections appear empty. Please add screenshots.');
+              }
+            }
+            
+            // Check for description section
+            if (!prBody.includes('## Description') || prBody.split('## Description')[1].trim().length < 20) {
+              warnings.push('⚠️ Please provide a meaningful description of your changes.');
+            }
+            
+            // Check for related issue
+            if (!prBody.includes('Linked Issue:') || !prBody.match(/Linked Issue:\s*#\d+/)) {
+              warnings.push('⚠️ Please link the related GitHub issue (e.g., "Linked Issue: #123").');
+            }
+            
+            // Build the comment message
+            let message = '## PR Validation Results\n\n';
+            
+            if (errors.length === 0 && warnings.length === 0) {
+              message += '✅ **All required checkboxes are checked!** Thank you for following the contribution guidelines.\n\n';
+              message += '### Change Detection:\n';
+              if (hasFrontendChanges) message += '- ✓ Frontend changes detected\n';
+              if (hasBackendChanges) message += '- ✓ Backend changes detected\n';
+              if (hasMobileChanges) message += '- ✓ Mobile changes detected\n';
+              if (hasUIChanges) message += '- ✓ UI changes detected\n';
+            } else {
+              if (errors.length > 0) {
+                message += '### ❌ Required Actions\n\n';
+                message += errors.join('\n\n') + '\n\n';
+                message += '**Please check the required boxes in your PR description to proceed.**\n\n';
+              }
+              
+              if (warnings.length > 0) {
+                message += '### ⚠️ Recommendations\n\n';
+                message += warnings.join('\n\n') + '\n\n';
+              }
+              
+              message += '### Change Detection:\n';
+              if (hasFrontendChanges) message += '- ✓ Frontend changes detected (requires validation)\n';
+              if (hasBackendChanges) message += '- ✓ Backend changes detected (requires TypeScript/Zod/Tests)\n';
+              if (hasMobileChanges) message += '- ✓ Mobile changes detected\n';
+              if (hasUIChanges) message += '- ✓ UI changes detected (requires screenshots)\n';
+              
+              message += '\n---\n\n';
+              message += '**How to fix**: Edit your PR description and check the required boxes. ';
+              message += 'Do not remove the checkboxes - they are required for validation.\n';
+            }
+            
+            // Post or update comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('PR Validation Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: message
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: message
+              });
+            }
+            
+            // Fail the check if there are errors
+            if (errors.length > 0) {
+              core.setFailed('Required PR checkboxes are not checked. Please review the comment on your PR.');
+            }
+
+      - name: Validate PR Type Selected
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prBody = context.payload.pull_request.body || '';
+            
+            // Check if at least one PR type is selected
+            const hasIssue = prBody.includes('[x] Issue') || prBody.includes('[X] Issue');
+            const hasFeature = prBody.includes('[x] New Feature') || prBody.includes('[X] New Feature');
+            const hasDoc = prBody.includes('[x] Documentation') || prBody.includes('[X] Documentation');
+            
+            if (!hasIssue && !hasFeature && !hasDoc) {
+              const message = '⚠️ **Please select a PR type**: Check one of [ ] Issue, [ ] New Feature, or [ ] Documentation in the PR description.';
+              
+              core.warning(message);
+              
+              // Post as comment but don't fail
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.payload.pull_request.number,
+                body: message
+              });
+            }
