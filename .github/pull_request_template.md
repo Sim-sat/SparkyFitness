@@ -21,6 +21,7 @@ Please check all that apply:
 - [ ] **Tests**: I have included automated tests for my changes.
 - [ ] **[MANDATORY for UI changes] Screenshots**: I have attached "Before" vs "After" screenshots below.
 - [ ] **[MANDATORY for Frontend changes] Quality**: I have run `pnpm run validate` (especially for Frontend).
+- [ ] **[MANDATORY for Backend changes] Code Quality**: New backend files use TypeScript, new endpoints have Zod schemas for validation, and new endpoints include tests.
 - [ ] **Translations**: I have only updated the English (`en`) translation file (if applicable).
 - [ ] **Architecture**: My code follows the existing architecture standards.
 - [ ] **Database Security**: I have updated `rls_policies.sql` for any new user-specific tables.
