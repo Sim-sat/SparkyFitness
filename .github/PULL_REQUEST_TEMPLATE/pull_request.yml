@@ -1,0 +1,100 @@
+name: Pull Request
+description: Standard template for all code changes
+body:
+  - type: markdown
+    attributes:
+      value: |
+        > [!TIP]
+        > **Help us review and merge your PR faster!**
+        > - **Frontend:** Run `pnpm run validate` to catch errors early.
+        > - **Tests & Screenshots:** PRs with tests and visuals get priority review!
+        > - **AI Usage:** Please edit AI-generated descriptions for conciseness.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Keep it concise. 1-2 sentences about the problem, and a brief technical summary of your solution.
+    validations:
+      required: true
+
+  - type: input
+    id: issue
+    attributes:
+      label: Linked Issue
+      description: What GitHub issue does this resolve?
+      placeholder: "#123"
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: How to Test
+      description: Step-by-step instructions so reviewers can verify your changes.
+      value: |
+        1. 
+        2. 
+        3.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: type
+    attributes:
+      label: PR Type
+      options:
+        - label: "New Feature"
+        - label: "Issue (bug fix)"
+        - label: "Refactor"
+        - label: "Documentation"
+
+  - type: checkboxes
+    id: checklist_general
+    attributes:
+      label: Required Checklist
+      options:
+        - label: "**[MANDATORY - ALL] Integrity & License**"
+          required: true
+        - label: "**[MANDATORY for new feature] Alignment**"
+
+  - type: checkboxes
+    id: checklist_frontend
+    attributes:
+      label: Frontend Checklist
+      description: Only check these if you modified SparkyFitnessFrontend/ or src/
+      options:
+        - label: "**[MANDATORY for Frontend changes] Quality**"
+        - label: "**[MANDATORY for Frontend changes] Translations**"
+
+  - type: checkboxes
+    id: checklist_backend
+    attributes:
+      label: Backend Checklist
+      description: Only check these if you modified SparkyFitnessServer/
+      options:
+        - label: "**[MANDATORY for Backend changes] Code Quality**"
+        - label: "**[MANDATORY for Backend changes] Database Security**"
+
+  - type: checkboxes
+    id: checklist_ui
+    attributes:
+      label: UI / Visual Changes
+      options:
+        - label: "**[MANDATORY for UI changes] Screenshots**"
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: If your PR changes the UI, drop your Before/After screenshots here.
+      value: |
+        ### Before
+
+        ### After
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes for Reviewers
+      description: Optional context, known tradeoffs, or specific questions.
