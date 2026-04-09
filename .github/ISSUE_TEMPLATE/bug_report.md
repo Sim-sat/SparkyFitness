@@ -1,86 +1,73 @@
----
 name: Bug Report
-about: Report a reproducible bug or unexpected behavior
+description: Report a bug or unexpected behavior in SparkyFitness
 title: "[Bug]: "
-labels: ["bug", "triage"]
-assignees: ""
----
+labels: ["bug"]
+body:
 
-## Important: Log Requirement for Troubleshooting
+- type: markdown
+  attributes:
+  value: |
+  Thanks for taking the time to report a bug! Please fill out as much as you can so we can reproduce and fix it faster.
 
-To effectively troubleshoot and resolve issues, it is crucial to provide relevant server and/or browser console logs that replicate the problem. Issues submitted without adequate logs may be difficult to diagnose and are at risk of being automatically closed.
+- type: textarea
+  id: description
+  attributes:
+  label: What happened?
+  description: A clear description of the bug.
+  placeholder: Describe what went wrong...
+  validations:
+  required: true
 
-## Bug Description
+- type: textarea
+  id: reproduce
+  attributes:
+  label: Steps to reproduce
+  description: How can we reproduce the issue?
+  placeholder: | 1. Go to '...' 2. Click on '...' 3. See error
+  validations:
+  required: true
 
-A clear and concise description of what the bug is.
+- type: textarea
+  id: expected
+  attributes:
+  label: Expected behavior
+  description: What did you expect to happen?
+  validations:
+  required: true
 
-## Steps to Reproduce
+- type: dropdown
+  id: install_type
+  attributes:
+  label: How are you running SparkyFitness?
+  options: - Docker Compose - Docker (manual) - Bare metal / manual install - Other
+  validations:
+  required: true
 
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+- type: input
+  id: version
+  attributes:
+  label: SparkyFitness version
+  placeholder: e.g. v0.16.5.0
+  validations:
+  required: true
 
-## Expected Behavior
+- type: dropdown
+  id: area
+  attributes:
+  label: Which area is affected?
+  multiple: true
+  options: - Web frontend - Mobile app (iOS) - Mobile app (Android) - Server / API - AI / SparkyAI - Integrations (Garmin, Fitbit, etc.) - Database / migrations - Docker / deployment - Other
 
-A clear and concise description of what you expected to happen.
+- type: textarea
+  id: logs
+  attributes:
+  label: Relevant logs or screenshots
+  description: Paste any relevant logs or attach screenshots. Docker logs can be grabbed with `docker compose logs`.
+  render: shell
 
-## Actual Behavior
+- type: textarea
+  id: extra
+  attributes:
+  label: Anything else?
+  description: Additional context, browser/OS info, environment details, etc.
 
-A clear and concise description of what actually happened.
-
-## Environment
-
-- **SparkyFitness Version:** [e.g., 1.0.0, commit hash]
-- **Running Env:** [e.g. Docker, Podmon, Directly running]
-
-
-
-## Relevant Environment Variables (if applicable)
-
-Please list any environment variables you have set that might be relevant to this issue (e.g., API keys, specific configuration flags). **Do not share sensitive information like full API keys or passwords.**
-
-```
-# Example:
-# SPARKY_FITNESS_LOG_LEVEL=DEBUG
-# NODE_ENV=development
-# TZ=Etc/UTC
-```
-
-## Preference Settings
-Screenshot of your preference settings
-
-## Browser Console Log
-
-Please open your browser's developer tools (usually F12 or Ctrl+Shift+I), go to the "Console" tab, and copy-paste any relevant error messages or warnings that appear when the bug occurs.
-
-Make sure you are cleaning the log before re-producing the steps to minimize the total log submitted.
-
-```
-# Paste console log here
-```
-
-## Container Log for SparkyFitness
-
-Please provide the container logs for the `sparkyfitness` service. You can usually obtain these logs using `docker logs sparkyfitness` or by checking your container orchestration platform's logging interface.
-
-```
-# Paste SparkyFitness container log here
-```
-
-## Container Log for SparkyFitness_Server
-
-Please provide the container logs for the `sparkyfitness_server` service. You can usually obtain these logs using `docker logs sparkyfitness_server` or by checking your container orchestration platform's logging interface.
-
-```
-# Paste SparkyFitness_Server container log here
-```
-
-## Screenshots/Videos (Optional)
-
-If applicable, add screenshots or a short video to help explain your problem.
-
-## Additional Context
-
-Add any other context about the problem here.

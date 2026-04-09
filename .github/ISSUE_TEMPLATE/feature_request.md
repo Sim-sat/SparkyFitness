@@ -1,23 +1,55 @@
----
 name: Feature Request
-about: Suggest an idea for this project
+description: Suggest a new feature or improvement for SparkyFitness
 title: "[Feature]: "
-labels: ["enhancement", "triage"]
-assignees: ""
----
+labels: ["enhancement"]
+body:
 
-## Is your feature request related to a problem? Please describe.
+- type: markdown
+  attributes:
+  value: |
+  Got an idea that would make SparkyFitness better? We'd love to hear it!
 
-A clear and concise description of what the problem is.
+- type: textarea
+  id: problem
+  attributes:
+  label: What problem does this solve?
+  description: Is this feature related to a frustration or limitation you've hit? Describe it.
+  placeholder: I wish I could... / It's annoying that...
+  validations:
+  required: true
 
-## Describe the solution you'd prefer
+- type: textarea
+  id: solution
+  attributes:
+  label: Describe the feature you'd like
+  description: A clear description of what you want to happen.
+  validations:
+  required: true
 
-A clear and concise description of what you want to happen.
+- type: dropdown
+  id: area
+  attributes:
+  label: Which area does this relate to?
+  multiple: true
+  options: - Web frontend - Mobile app (iOS) - Mobile app (Android) - Server / API - AI / SparkyAI - Integrations (Garmin, Fitbit, etc.) - Nutrition tracking - Exercise tracking - Body metrics - Family / multi-user - Docker / deployment - Other
 
-## Describe alternatives you've considered
+- type: dropdown
+  id: priority
+  attributes:
+  label: How important is this to you?
+  options: - Nice to have - Would significantly improve my workflow - Blocking me from using SparkyFitness
+  validations:
+  required: true
 
-A clear and concise description of any alternative solutions or features you've considered.
+- type: textarea
+  id: alternatives
+  attributes:
+  label: Alternatives you've considered
+  description: Any workarounds or other approaches you've thought about?
 
-## Additional context
+- type: textarea
+  id: extra
+  attributes:
+  label: Additional context
+  description: Mockups, screenshots, links to similar features in other apps, etc.
 
-Add any other context or screenshots about the feature request here.
