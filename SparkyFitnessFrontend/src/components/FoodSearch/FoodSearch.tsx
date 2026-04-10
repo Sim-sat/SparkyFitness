@@ -263,6 +263,7 @@ const EnhancedFoodSearch = ({
       setShowEditDialog(false);
       setEditingProduct(null);
 
+      setShowAddFoodDialog(false);
       toast({
         title: 'Food added',
         description: `${foodData.name} has been added and is ready to be added to your meal`,

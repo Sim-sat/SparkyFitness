@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +89,10 @@ const Diary = () => {
   const [openFoodSearchForMealType, setOpenFoodSearchForMealType] = useState<
     string | null
   >(null);
+  const [pendingSearchMealType, setPendingSearchMealType] = useState<
+    string | null
+  >(null);
+  const foodConfirmedRef = useRef(false);
 
   const currentUserId = activeUserId;
   const { data: customNutrients, isLoading: customNutrientsLoading } =
@@ -216,6 +220,7 @@ const Diary = () => {
     if ('is_custom' in item) {
       // It's a Food
       debug(loggingLevel, 'Handling food select:', { food: item, mealType });
+      setPendingSearchMealType(mealType);
       setSelectedFood(item as Food);
       setSelectedMealType(mealType); // Name
       setSelectedMealTypeId(typeId); // UUID
@@ -248,6 +253,9 @@ const Diary = () => {
       unit,
       selectedVariant,
     });
+    foodConfirmedRef.current = true;
+    setIsUnitSelectorOpen(false);
+    setPendingSearchMealType(null);
     try {
       await createFoodEntry({
         user_id: currentUserId,
@@ -457,7 +465,17 @@ const Diary = () => {
         <FoodUnitSelector
           food={selectedFood}
           open={isUnitSelectorOpen}
-          onOpenChange={setIsUnitSelectorOpen}
+          onOpenChange={(open) => {
+            setIsUnitSelectorOpen(open);
+            if (!open && pendingSearchMealType) {
+              if (foodConfirmedRef.current) {
+                foodConfirmedRef.current = false;
+              } else {
+                setOpenFoodSearchForMealType(pendingSearchMealType);
+                setPendingSearchMealType(null);
+              }
+            }
+          }}
           onSelect={handleFoodUnitSelect}
           showUnitSelector={true}
         />

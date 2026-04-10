@@ -263,6 +263,7 @@ const MealCard = ({
                   <EnhancedFoodSearch
                     mealType={meal.type}
                     onFoodSelect={(item, type) => {
+                      handleFoodSearchOpenChange(false);
                       if (type === 'food') {
                         debug(
                           loggingLevel,
