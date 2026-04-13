@@ -6,7 +6,43 @@ vi.mock('../config/logging', () => ({ log: vi.fn() }));
 const TEST_USER_ID = 'user-123';
 const FOOD_ID = 'food-456';
 const VARIANT_ID = 'variant-789';
-const makeFood = (overrides = {}) => ({
+
+type Food = {
+  id: string;
+  name: string;
+  brand: string | null;
+  is_custom: boolean;
+  user_id: string;
+};
+
+type FoodVariant = {
+  id: string;
+  food_id: string;
+  serving_size: number;
+  serving_unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  saturated_fat: number | null;
+  polyunsaturated_fat: number | null;
+  monounsaturated_fat: number | null;
+  trans_fat: number | null;
+  cholesterol: number | null;
+  sodium: number | null;
+  potassium: number | null;
+  dietary_fiber: number | null;
+  sugars: number | null;
+  vitamin_a: number | null;
+  vitamin_c: number | null;
+  calcium: number | null;
+  iron: number | null;
+  glycemic_index: number | null;
+  custom_nutrients: Record<string, string | null> | null;
+  is_default: boolean;
+};
+
+const makeFood = (overrides: Partial<Food> = {}): Food => ({
   id: FOOD_ID,
   name: 'Chicken Breast',
   brand: 'Acme',
@@ -14,7 +50,8 @@ const makeFood = (overrides = {}) => ({
   user_id: TEST_USER_ID,
   ...overrides,
 });
-const makeVariant = (overrides = {}) => ({
+
+const makeVariant = (overrides: Partial<FoodVariant> = {}): FoodVariant => ({
   id: VARIANT_ID,
   food_id: FOOD_ID,
   serving_size: 100,
@@ -42,34 +79,32 @@ const makeVariant = (overrides = {}) => ({
   ...overrides,
 });
 describe('foodCoreService.updateFoodEntriesSnapshot', () => {
+  const mockedFoodRepository = vi.mocked(foodRepository, { deep: true });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
   it('should fetch food + variant, update snapshot, clear ignored updates, and return success message', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockResolvedValue(2);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockResolvedValue();
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockResolvedValue(2);
+    mockedFoodRepository.clearUserIgnoredUpdate.mockResolvedValue(undefined);
     const result = await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
       FOOD_ID,
       VARIANT_ID
     );
     expect(result).toEqual({ message: 'Food entries updated successfully.' });
-    expect(foodRepository.getFoodById).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.getFoodById).toHaveBeenCalledWith(
       FOOD_ID,
       TEST_USER_ID
     );
-    expect(foodRepository.getFoodVariantById).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.getFoodVariantById).toHaveBeenCalledWith(
       VARIANT_ID,
       TEST_USER_ID
     );
-    expect(foodRepository.updateFoodEntriesSnapshot).toHaveBeenCalled();
-    expect(foodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).toHaveBeenCalled();
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
       TEST_USER_ID,
       VARIANT_ID
     );
@@ -77,14 +112,10 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
   it('should pass the exact snapshot shape to the repository', async () => {
     const food = makeFood();
     const variant = makeVariant();
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(food);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(variant);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockResolvedValue();
+    mockedFoodRepository.getFoodById.mockResolvedValue(food);
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(variant);
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
+    mockedFoodRepository.clearUserIgnoredUpdate.mockResolvedValue(undefined);
     await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
       FOOD_ID,
@@ -93,7 +124,7 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
     // This is the key test — verifies the 4-arg call with the full snapshot object.
     // The original 3-arg bug would have failed here because newSnapshotData
     // would have been missing entirely.
-    expect(foodRepository.updateFoodEntriesSnapshot).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).toHaveBeenCalledWith(
       TEST_USER_ID,
       FOOD_ID,
       VARIANT_ID,
@@ -128,27 +159,22 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
     const variant = makeVariant({
       custom_nutrients: { zinc: '1.3mg', empty: '', blank: null, ok: '5mg' },
     });
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(variant);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockResolvedValue();
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(variant);
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
+    mockedFoodRepository.clearUserIgnoredUpdate.mockResolvedValue(undefined);
     await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
       FOOD_ID,
       VARIANT_ID
     );
     const snapshotArg =
-      // @ts-expect-error TS(2339): Property 'mock' does not exist on type '(userId: a... Remove this comment to see the full error message
-      foodRepository.updateFoodEntriesSnapshot.mock.calls[0][3];
+      mockedFoodRepository.updateFoodEntriesSnapshot.mock.calls[0]?.[3];
+    expect(snapshotArg).toBeDefined();
     expect(snapshotArg.custom_nutrients).toEqual({ zinc: '1.3mg', ok: '5mg' });
   });
   it('should throw "Food not found." when food is null', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(null);
+    mockedFoodRepository.getFoodById.mockResolvedValue(null);
     await expect(
       foodCoreService.updateFoodEntriesSnapshot(
         TEST_USER_ID,
@@ -156,14 +182,12 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
         VARIANT_ID
       )
     ).rejects.toThrow('Food not found.');
-    expect(foodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
-    expect(foodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
   });
   it('should throw "Food variant not found." when variant is null', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(null);
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(null);
     await expect(
       foodCoreService.updateFoodEntriesSnapshot(
         TEST_USER_ID,
@@ -171,16 +195,13 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
         VARIANT_ID
       )
     ).rejects.toThrow('Food variant not found.');
-    expect(foodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
-    expect(foodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
   });
   it('should not clear ignored updates when snapshot update throws', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
-    // @ts-expect-error TS(2339): Property 'mockRejectedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockRejectedValue(
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockRejectedValue(
       new Error('DB write failed')
     );
     await expect(
@@ -190,27 +211,22 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
         VARIANT_ID
       )
     ).rejects.toThrow('DB write failed');
-    expect(foodRepository.updateFoodEntriesSnapshot).toHaveBeenCalled();
-    expect(foodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).toHaveBeenCalled();
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
   });
   // Snapshot update must succeed before clearing ignored updates, so a failure
   // doesn't also lose the user's ignore state.
   it('should call updateFoodEntriesSnapshot before clearUserIgnoredUpdate', async () => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const callOrder: any = [];
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
-    // @ts-expect-error TS(2339): Property 'mockImplementation' does not exist on ty... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockImplementation(() => {
+    const callOrder: string[] = [];
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantById.mockResolvedValue(makeVariant());
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockImplementation(() => {
       callOrder.push('updateFoodEntriesSnapshot');
       return Promise.resolve(1);
     });
-    // @ts-expect-error TS(2339): Property 'mockImplementation' does not exist on ty... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockImplementation(() => {
+    mockedFoodRepository.clearUserIgnoredUpdate.mockImplementation(() => {
       callOrder.push('clearUserIgnoredUpdate');
-      return Promise.resolve();
+      return Promise.resolve(undefined);
     });
     await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
@@ -226,35 +242,31 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
   it('should fetch all variants and update each one when variantId is not provided', async () => {
     const variantA = makeVariant({ id: 'variant-aaa' });
     const variantB = makeVariant({ id: 'variant-bbb', calories: 200 });
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantsByFoodId.mockResolvedValue([
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantsByFoodId.mockResolvedValue([
       variantA,
       variantB,
     ]);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockResolvedValue();
-    // @ts-expect-error TS(2554): Expected 3 arguments, but got 2.
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
+    mockedFoodRepository.clearUserIgnoredUpdate.mockResolvedValue(undefined);
     const result = await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
-      FOOD_ID
+      FOOD_ID,
+      undefined
     );
     expect(result).toEqual({ message: 'Food entries updated successfully.' });
-    expect(foodRepository.getFoodVariantsByFoodId).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.getFoodVariantsByFoodId).toHaveBeenCalledWith(
       FOOD_ID,
       TEST_USER_ID
     );
-    expect(foodRepository.getFoodVariantById).not.toHaveBeenCalled();
-    expect(foodRepository.updateFoodEntriesSnapshot).toHaveBeenCalledTimes(2);
-    expect(foodRepository.clearUserIgnoredUpdate).toHaveBeenCalledTimes(2);
-    expect(foodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.getFoodVariantById).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).toHaveBeenCalledTimes(2);
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).toHaveBeenCalledTimes(2);
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
       TEST_USER_ID,
       'variant-aaa'
     );
-    expect(foodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).toHaveBeenCalledWith(
       TEST_USER_ID,
       'variant-bbb'
     );
@@ -263,52 +275,43 @@ describe('foodCoreService.updateFoodEntriesSnapshot', () => {
     const food = makeFood();
     const variantA = makeVariant({ id: 'variant-aaa', calories: 100 });
     const variantB = makeVariant({ id: 'variant-bbb', calories: 250 });
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(food);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantsByFoodId.mockResolvedValue([
+    mockedFoodRepository.getFoodById.mockResolvedValue(food);
+    mockedFoodRepository.getFoodVariantsByFoodId.mockResolvedValue([
       variantA,
       variantB,
     ]);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.clearUserIgnoredUpdate.mockResolvedValue();
-    // @ts-expect-error TS(2554): Expected 3 arguments, but got 2.
-    await foodCoreService.updateFoodEntriesSnapshot(TEST_USER_ID, FOOD_ID);
-    // @ts-expect-error TS(2339): Property 'mock' does not exist on type '(userId: a... Remove this comment to see the full error message
-    const firstCall = foodRepository.updateFoodEntriesSnapshot.mock.calls[0];
+    mockedFoodRepository.updateFoodEntriesSnapshot.mockResolvedValue(1);
+    mockedFoodRepository.clearUserIgnoredUpdate.mockResolvedValue(undefined);
+    await foodCoreService.updateFoodEntriesSnapshot(TEST_USER_ID, FOOD_ID, undefined);
+    const firstCall = mockedFoodRepository.updateFoodEntriesSnapshot.mock.calls[0];
+    expect(firstCall).toBeDefined();
     expect(firstCall[2]).toBe('variant-aaa');
     expect(firstCall[3].calories).toBe(100);
     expect(firstCall[3].food_name).toBe(food.name);
-    // @ts-expect-error TS(2339): Property 'mock' does not exist on type '(userId: a... Remove this comment to see the full error message
-    const secondCall = foodRepository.updateFoodEntriesSnapshot.mock.calls[1];
+    const secondCall = mockedFoodRepository.updateFoodEntriesSnapshot.mock.calls[1];
+    expect(secondCall).toBeDefined();
     expect(secondCall[2]).toBe('variant-bbb');
     expect(secondCall[3].calories).toBe(250);
     expect(secondCall[3].food_name).toBe(food.name);
   });
   it('should succeed with no updates when food has no variants and variantId is not provided', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(makeFood());
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodVariantsByFoodId.mockResolvedValue([]);
-    // @ts-expect-error TS(2554): Expected 3 arguments, but got 2.
+    mockedFoodRepository.getFoodById.mockResolvedValue(makeFood());
+    mockedFoodRepository.getFoodVariantsByFoodId.mockResolvedValue([]);
     const result = await foodCoreService.updateFoodEntriesSnapshot(
       TEST_USER_ID,
-      FOOD_ID
+      FOOD_ID,
+      undefined
     );
     expect(result).toEqual({ message: 'Food entries updated successfully.' });
-    expect(foodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
-    expect(foodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.clearUserIgnoredUpdate).not.toHaveBeenCalled();
   });
   it('should throw "Food not found." when food is null and variantId is not provided', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodRepository.getFoodById.mockResolvedValue(null);
+    mockedFoodRepository.getFoodById.mockResolvedValue(null);
     await expect(
-      // @ts-expect-error TS(2554): Expected 3 arguments, but got 2.
-      foodCoreService.updateFoodEntriesSnapshot(TEST_USER_ID, FOOD_ID)
+      foodCoreService.updateFoodEntriesSnapshot(TEST_USER_ID, FOOD_ID, undefined)
     ).rejects.toThrow('Food not found.');
-    expect(foodRepository.getFoodVariantsByFoodId).not.toHaveBeenCalled();
-    expect(foodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.getFoodVariantsByFoodId).not.toHaveBeenCalled();
+    expect(mockedFoodRepository.updateFoodEntriesSnapshot).not.toHaveBeenCalled();
   });
 });

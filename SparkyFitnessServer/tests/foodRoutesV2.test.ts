@@ -1,13 +1,28 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest';
 import express from 'express';
-// @ts-expect-error TS(7016): Could not find a declaration file for module 'supe... Remove this comment to see the full error message
 import request from 'supertest';
 import foodCoreService from '../services/foodCoreService.js';
-// @ts-expect-error TS(2691): An import path cannot end with a '.ts' extension. ... Remove this comment to see the full error message
-import foodRoutesV2 from '../routes/v2/foodRoutes.js';
+import * as foodRoutesV2Module from '../routes/v2/foodRoutes.js';
+import type { NextFunction, Request, Response } from 'express';
+
+function getRouterFromModule(mod: unknown): express.Router {
+  if (typeof mod === 'function') {
+    return mod as express.Router;
+  }
+  if (
+    typeof mod === 'object' &&
+    mod !== null &&
+    'default' in mod &&
+    typeof (mod as { default?: unknown }).default === 'function'
+  ) {
+    return (mod as { default: express.Router }).default;
+  }
+  throw new Error('Expected v2 food routes module to export an Express router');
+}
 vi.mock('../middleware/checkPermissionMiddleware.js', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  default: vi.fn(() => (req: any, res: any, next: any) => next()),
+  default: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) =>
+    next()
+  ),
 }));
 
 vi.mock('../services/foodCoreService.js', () => ({
@@ -67,6 +82,7 @@ vi.mock('../services/foodIntegrationService.js', () => ({
   },
 }));
 const app = express();
+const foodRoutesV2 = getRouterFromModule(foodRoutesV2Module);
 app.use(express.json());
 app.use((req, res, next) => {
   req.userId = 'user-123';
@@ -75,18 +91,26 @@ app.use((req, res, next) => {
   next();
 });
 app.use('/v2/foods', foodRoutesV2);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use((err: any, req: any, res: any, _next: any) => {
-  res.status(err.status || 500).json({ error: err.message });
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const status =
+    typeof err === 'object' &&
+    err !== null &&
+    'status' in err &&
+    typeof (err as { status?: unknown }).status === 'number'
+      ? (err as { status: number }).status
+      : 500;
+  const message = err instanceof Error ? err.message : 'Unknown error';
+  res.status(status).json({ error: message });
 });
 describe('GET /v2/foods/barcode/:barcode', () => {
+  const mockedFoodCoreService = vi.mocked(foodCoreService, { deep: true });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
   it('returns a local barcode hit when optional fields are null', async () => {
     const barcode = '012345678901';
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodCoreService.lookupBarcode.mockResolvedValue({
+    mockedFoodCoreService.lookupBarcode.mockResolvedValue({
       source: 'local',
       food: {
         id: 'food-abc-123',

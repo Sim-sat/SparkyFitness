@@ -1,9 +1,9 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest';
-// @ts-expect-error TS(7016): Could not find a declaration file for module 'supe... Remove this comment to see the full error message
 import request from 'supertest';
 import express from 'express';
 import foodCrudRoutes from '../routes/foodCrudRoutes.js';
 import foodService from '../services/foodService.js';
+import type { NextFunction, Request, Response } from 'express';
 vi.mock('../services/foodService.js', () => ({
   default: {
     lookupBarcode: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock('../services/foodService.js', () => ({
 }));
 
 vi.mock('../middleware/authMiddleware.js', () => ({
-  authenticate: vi.fn((req, res, next) => {
+  authenticate: vi.fn((req: Request, _res: Response, next: NextFunction) => {
     req.userId = 'user-123';
     req.authenticatedUserId = 'user-123';
     next();
@@ -19,8 +19,9 @@ vi.mock('../middleware/authMiddleware.js', () => ({
 }));
 
 vi.mock('../middleware/checkPermissionMiddleware.js', () => ({
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  default: vi.fn(() => (req: any, res: any, next: any) => next()),
+  default: vi.fn(() => (_req: Request, _res: Response, next: NextFunction) =>
+    next()
+  ),
 }));
 
 vi.mock('../config/logging.js', () => ({
@@ -30,11 +31,13 @@ const app = express();
 app.use(express.json());
 app.use('/food-crud', foodCrudRoutes);
 // Error handler so 500s return JSON instead of HTML
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-app.use((err: any, req: any, res: any, _next: any) => {
-  res.status(500).json({ error: err.message });
+app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const message = err instanceof Error ? err.message : 'Unknown error';
+  res.status(500).json({ error: message });
 });
 describe('GET /food-crud/barcode/:barcode', () => {
+  const mockedFoodService = vi.mocked(foodService, { deep: true });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -55,28 +58,26 @@ describe('GET /food-crud/barcode/:barcode', () => {
     expect(res.body.error).toMatch(/Invalid barcode format/);
   });
   it('should accept an 8-digit barcode', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue({
+    mockedFoodService.lookupBarcode.mockResolvedValue({
       source: 'not_found',
       food: null,
     });
     const res = await request(app).get('/food-crud/barcode/12345678');
     expect(res.statusCode).toBe(200);
-    expect(foodService.lookupBarcode).toHaveBeenCalledWith(
+    expect(mockedFoodService.lookupBarcode).toHaveBeenCalledWith(
       '12345678',
       'user-123',
       undefined
     );
   });
   it('should accept a 14-digit barcode', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue({
+    mockedFoodService.lookupBarcode.mockResolvedValue({
       source: 'not_found',
       food: null,
     });
     const res = await request(app).get('/food-crud/barcode/12345678901234');
     expect(res.statusCode).toBe(200);
-    expect(foodService.lookupBarcode).toHaveBeenCalledWith(
+    expect(mockedFoodService.lookupBarcode).toHaveBeenCalledWith(
       '12345678901234',
       'user-123',
       undefined
@@ -93,8 +94,7 @@ describe('GET /food-crud/barcode/:barcode', () => {
         default_variant: { calories: 588 },
       },
     };
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue(localResult);
+    mockedFoodService.lookupBarcode.mockResolvedValue(localResult);
     const res = await request(app).get('/food-crud/barcode/012345678901');
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual(localResult);
@@ -112,15 +112,13 @@ describe('GET /food-crud/barcode/:barcode', () => {
         default_variant: { calories: 539 },
       },
     };
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue(offResult);
+    mockedFoodService.lookupBarcode.mockResolvedValue(offResult);
     const res = await request(app).get('/food-crud/barcode/3017620422003');
     expect(res.statusCode).toBe(200);
     expect(res.body).toEqual(offResult);
   });
   it('should return not_found result', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue({
+    mockedFoodService.lookupBarcode.mockResolvedValue({
       source: 'not_found',
       food: null,
     });
@@ -129,8 +127,7 @@ describe('GET /food-crud/barcode/:barcode', () => {
     expect(res.body).toEqual({ source: 'not_found', food: null });
   });
   it('should return 500 when service throws', async () => {
-    // @ts-expect-error TS(2339): Property 'mockRejectedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockRejectedValue(
+    mockedFoodService.lookupBarcode.mockRejectedValue(
       new Error('DB connection lost')
     );
     const res = await request(app).get('/food-crud/barcode/012345678901');
@@ -144,8 +141,7 @@ describe('GET /food-crud/barcode/:barcode', () => {
     expect(foodService.lookupBarcode).not.toHaveBeenCalled();
   });
   it('should pass providerId query param to lookupBarcode', async () => {
-    // @ts-expect-error TS(2339): Property 'mockResolvedValue' does not exist on typ... Remove this comment to see the full error message
-    foodService.lookupBarcode.mockResolvedValue({
+    mockedFoodService.lookupBarcode.mockResolvedValue({
       source: 'usda',
       food: { name: 'Test USDA Food' },
     });
@@ -154,7 +150,7 @@ describe('GET /food-crud/barcode/:barcode', () => {
       `/food-crud/barcode/3017620422003?providerId=${providerId}`
     );
     expect(res.statusCode).toBe(200);
-    expect(foodService.lookupBarcode).toHaveBeenCalledWith(
+    expect(mockedFoodService.lookupBarcode).toHaveBeenCalledWith(
       '3017620422003',
       'user-123',
       providerId

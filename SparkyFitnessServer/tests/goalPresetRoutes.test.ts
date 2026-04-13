@@ -1,5 +1,4 @@
 import { vi, beforeEach, describe, expect, it } from 'vitest';
-// @ts-expect-error TS(7016): Could not find a declaration file for module 'supe... Remove this comment to see the full error message
 import request from 'supertest';
 import express from 'express';
 import goalPresetService from '../services/goalPresetService.js';
