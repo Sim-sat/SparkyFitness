@@ -1,6 +1,6 @@
 import { apiCall } from '@/api/api';
-import { DefaultPreferences } from '@/contexts/PreferencesContext';
 import { UserPreferences } from '@/services/preferenceService';
+import { DefaultPreferences } from '@/types/preferences';
 
 interface NutrientPreference {
   view_group: string;

@@ -26,7 +26,7 @@ export default tseslint.config(
         { allowConstantExport: true },
       ],
       // will be adjusted when more components are refactored. The goal should be 600 or lower
-      'max-len': ['error', { code: 1150 }],
+      'max-len': ['error', { code: 885 }],
       '@typescript-eslint/no-unused-vars': 'off',
       'unused-imports/no-unused-imports': 'error',
 
