@@ -8,7 +8,12 @@ changelog:
       - "good first issue"
       - "help wanted"
       - eas-build
+      - skip-changelog
+      - refactor
   categories:
+    - title: "Security"
+      labels:
+        - security
     - title: "Features"
       labels:
         - enhancement
