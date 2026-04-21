@@ -365,8 +365,9 @@ postgresql:
   auth:
     database: sparkyfitness
     username: sparky
+    # -- Password for PostgreSQL owner user (auto-generated if empty)
     password: ""
-    # -- Use an existing K8s Secret (keys: username, password)
+    # -- Use an existing K8s Secret (keys: username, password; optional: database)
     existingSecret: ""
   persistence:
     enabled: true

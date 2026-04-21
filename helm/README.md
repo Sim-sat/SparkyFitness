@@ -26,7 +26,7 @@ This deploys Sparkyfitness with a bundled PostgreSQL instance, auto-generated se
 
 ### Bundled PostgreSQL (default)
 
-Enabled by default. Credentials are auto-generated on first install and preserved across upgrades.
+Enabled by default. The chart creates a PostgreSQL `Service` + `StatefulSet` and chart-managed credentials (unless `postgresql.auth.existingSecret` is set). Passwords are auto-generated on first install when `postgresql.auth.password` is empty and preserved across upgrades.
 
 ```yaml
 postgresql:
@@ -81,7 +81,7 @@ The chart manages five separate Kubernetes Secrets:
 |--------|------|---------|
 | `<release>-app` | `api_encryption_key`, `better_auth_secret` | Server |
 | `<release>-appdb` | `username`, `password` | Server (app DB user) |
-| `<release>-postgres` | `username`, `password` | Server (DB owner) |
+| `<release>-postgres` | `username`, `password` (`database` optional) | Server (DB owner) + bundled PostgreSQL |
 | `<release>-oidc` | `client_id`, `client_secret` | Server (if OIDC enabled) |
 | `<release>-smtp` | `username`, `password` | Server (if email enabled) |
 
