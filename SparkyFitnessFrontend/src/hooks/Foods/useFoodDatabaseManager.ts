@@ -219,5 +219,6 @@ export function useFoodDatabaseManager() {
     handleDeleteRequest,
     handleConfirmDelete,
     handleCancelDelete,
+    deleteFood,
   };
 }
