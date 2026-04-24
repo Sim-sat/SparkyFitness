@@ -25,7 +25,6 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Search, Plus, Filter } from 'lucide-react';
-import FoodSearchDialog from '@/components/FoodSearch/FoodSearchDialog';
 import FoodUnitSelector from '@/components/FoodUnitSelector';
 import MealManagement from './MealManagement';
 import MealPlanCalendar from './MealPlanCalendar';
@@ -33,6 +32,8 @@ import CustomFoodForm from '@/components/FoodSearch/CustomFoodForm';
 import { MealFilter } from '@/types/meal';
 import { useFoodDatabaseManager } from '@/hooks/Foods/useFoodDatabaseManager';
 import { FoodCard } from './FoodCard';
+import DeleteFoodDialog from './DeleteFoodDialog';
+import FoodSearchDialog from '@/components/FoodSearch/FoodSearchDialog';
 
 const FoodDatabaseManager = () => {
   const { t } = useTranslation();
@@ -56,7 +57,6 @@ const FoodDatabaseManager = () => {
     pendingDeletion,
     handleConfirmDelete,
     handleCancelDelete,
-    showFoodSearchDialog,
     setShowFoodSearchDialog,
     showEditDialog,
     setShowEditDialog,
@@ -64,6 +64,7 @@ const FoodDatabaseManager = () => {
     showFoodUnitSelectorDialog,
     setShowFoodUnitSelectorDialog,
     getPageNumbers,
+    handleFoodSelected,
     foodToAddToMeal,
     togglePublicSharing,
     canEdit,
@@ -71,9 +72,9 @@ const FoodDatabaseManager = () => {
     handlePageChange,
     handleEdit,
     handleSaveComplete,
-    handleFoodSelected,
     handleAddFoodToMeal,
     handleDeleteRequest,
+    showFoodSearchDialog,
   } = useFoodDatabaseManager();
   if (!isAuthenticated) {
     return (
@@ -328,99 +329,6 @@ const FoodDatabaseManager = () => {
           onSelect={handleAddFoodToMeal}
         />
       )}
-
-      {pendingDeletion && (
-        <Dialog open onOpenChange={handleCancelDelete}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {t('foodDatabaseManager.deleteFoodConfirmTitle', {
-                  foodName: pendingDeletion.food.name,
-                  defaultValue: `Delete ${pendingDeletion.food.name}?`,
-                })}
-              </DialogTitle>
-            </DialogHeader>
-            <div>
-              <p>
-                {t('foodDatabaseManager.foodUsedIn', 'This food is used in:')}
-              </p>
-              <ul className="list-disc pl-5 mt-2">
-                <li>
-                  {t('foodDatabaseManager.diaryEntries', {
-                    count: pendingDeletion.impact.foodEntriesCount,
-                    defaultValue: `${pendingDeletion.impact.foodEntriesCount} diary entries`,
-                  })}
-                </li>
-                <li>
-                  {t('foodDatabaseManager.mealComponents', {
-                    count: pendingDeletion.impact.mealFoodsCount,
-                    defaultValue: `${pendingDeletion.impact.mealFoodsCount} meal components`,
-                  })}
-                </li>
-                <li>
-                  {t('foodDatabaseManager.mealPlanEntries', {
-                    count: pendingDeletion.impact.mealPlansCount,
-                    defaultValue: `${pendingDeletion.impact.mealPlansCount} meal plan entries`,
-                  })}
-                </li>
-                <li>
-                  {t('foodDatabaseManager.mealPlanTemplateEntries', {
-                    count:
-                      pendingDeletion.impact.mealPlanTemplateAssignmentsCount,
-                    defaultValue: `${pendingDeletion.impact.mealPlanTemplateAssignmentsCount} meal plan template entries`,
-                  })}
-                </li>
-              </ul>
-              {pendingDeletion.impact.otherUserReferences > 0 && (
-                <div className="mt-4 p-4 bg-yellow-100 text-yellow-800 rounded-md">
-                  <p className="font-bold">
-                    {t('foodDatabaseManager.warning', 'Warning!')}
-                  </p>
-                  <p>
-                    {t(
-                      'foodDatabaseManager.foodUsedByOtherUsersWarning',
-                      'This food is used by other users...'
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-            <div className="flex justify-end space-x-2 mt-4">
-              <Button variant="outline" onClick={handleCancelDelete}>
-                {t('foodDatabaseManager.cancel', 'Cancel')}
-              </Button>
-              {pendingDeletion.impact.totalReferences === 0 ? (
-                <Button
-                  variant="destructive"
-                  onClick={() => handleConfirmDelete(true)}
-                >
-                  {t('foodDatabaseManager.delete', 'Delete')}
-                </Button>
-              ) : pendingDeletion.impact.otherUserReferences > 0 ? (
-                <Button onClick={() => handleConfirmDelete(false)}>
-                  {t('foodDatabaseManager.hide', 'Hide')}
-                </Button>
-              ) : (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleConfirmDelete(false)}
-                  >
-                    {t('foodDatabaseManager.hide', 'Hide')}
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    onClick={() => handleConfirmDelete(true)}
-                  >
-                    {t('foodDatabaseManager.forceDelete', 'Force Delete')}
-                  </Button>
-                </>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
       <FoodSearchDialog
         open={showFoodSearchDialog}
         onOpenChange={setShowFoodSearchDialog}
@@ -435,6 +343,12 @@ const FoodDatabaseManager = () => {
         )}
         hideDatabaseTab={true}
         hideMealTab={true}
+      />
+
+      <DeleteFoodDialog
+        pendingDeletion={pendingDeletion}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
       />
     </div>
   );
