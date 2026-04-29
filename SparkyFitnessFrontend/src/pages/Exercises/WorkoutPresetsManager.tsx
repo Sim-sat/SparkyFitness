@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { formatDateToYYYYMMDD } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,6 +9,7 @@ import {
   Edit,
   Trash2,
   CalendarPlus,
+  Play,
   Loader2,
   Layers,
   Dumbbell,
@@ -35,6 +37,11 @@ import {
 } from '@/hooks/Exercises/useWorkoutPresets';
 import { useLogWorkoutPresetMutation } from '@/hooks/Exercises/useExerciseEntries';
 import { usePreferences } from '@/contexts/PreferencesContext';
+import {
+  createWorkoutPlaybackDraftFromPreset,
+  loadWorkoutPlaybackDraft,
+  saveWorkoutPlaybackDraft,
+} from '@/utils/workoutPlayback';
 
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import BulkActionToolbar from '@/components/BulkActionToolbar';
@@ -47,6 +54,8 @@ import { Badge } from '@/components/ui/badge';
 
 const WorkoutPresetsManager = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const { weightUnit } = usePreferences();
@@ -155,6 +164,40 @@ const WorkoutPresetsManager = () => {
       }
     },
     [logWorkoutPreset, t]
+  );
+
+  const handleStartWorkoutPlayback = React.useCallback(
+    (preset: WorkoutPreset) => {
+      const today = formatDateToYYYYMMDD(new Date());
+      const existingDraft = loadWorkoutPlaybackDraft();
+      const existingMatchesPreset =
+        existingDraft &&
+        existingDraft.preset_id === String(preset.id) &&
+        existingDraft.entry_date === today;
+
+      if (existingDraft && !existingMatchesPreset) {
+        const shouldReplace = window.confirm(
+          t(
+            'exercise.workoutPlaybackDialog.replaceDraftConfirm',
+            'You already have an in-progress workout. Starting this one will replace it. Continue?'
+          )
+        );
+        if (!shouldReplace) {
+          return;
+        }
+      }
+
+      const nextDraft =
+        existingMatchesPreset && existingDraft
+          ? existingDraft
+          : createWorkoutPlaybackDraftFromPreset(preset, today);
+
+      saveWorkoutPlaybackDraft(nextDraft);
+      navigate(`/workout-playback?date=${today}`, {
+        state: { returnTo: `${location.pathname}${location.search}` },
+      });
+    },
+    [location.pathname, location.search, navigate, t]
   );
 
   const columns = React.useMemo<ColumnDef<WorkoutPreset>[]>(
@@ -266,6 +309,12 @@ const WorkoutPresetsManager = () => {
                   {t('common.actions', 'Actions')}
                 </DropdownMenuLabel>
                 <DropdownMenuItem
+                  onClick={() => handleStartWorkoutPlayback(preset)}
+                >
+                  <Play className="mr-2 h-4 w-4" />
+                  {t('workoutPresetsManager.startWorkout', 'Start Workout')}
+                </DropdownMenuItem>
+                <DropdownMenuItem
                   onClick={() => handleLogPresetToDiary(preset)}
                 >
                   <CalendarPlus className="mr-2 h-4 w-4" />
@@ -296,7 +345,14 @@ const WorkoutPresetsManager = () => {
         },
       },
     ],
-    [t, user?.id, weightUnit, handleLogPresetToDiary, handleDeletePreset]
+    [
+      t,
+      user?.id,
+      weightUnit,
+      handleLogPresetToDiary,
+      handleDeletePreset,
+      handleStartWorkoutPlayback,
+    ]
   );
 
   return (

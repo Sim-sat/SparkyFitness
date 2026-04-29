@@ -11,6 +11,7 @@ import {
   updateExerciseEntry,
   deleteExerciseEntry,
   logWorkoutPreset,
+  createPresetSession,
   deleteExercisePresetEntry,
   fetchExerciseDetails,
   fetchExerciseEntryHistoryV2,
@@ -19,8 +20,11 @@ import {
 import { exerciseEntryKeys, exerciseKeys } from '@/api/keys/exercises';
 import i18n from '@/i18n';
 import { dailyProgressKeys } from '@/api/keys/diary';
-import { UpdateExerciseEntryRequest } from '@workspace/shared';
 import { useDiaryInvalidation } from '../useInvalidateKeys';
+import {
+  CreatePresetSessionRequest,
+  UpdateExerciseEntryRequest,
+} from '@workspace/shared';
 
 // --- Queries ---
 
@@ -150,6 +154,37 @@ export const useLogWorkoutPresetMutation = () => {
       errorMessage: t(
         'diary.exerciseEntry.logPresetError',
         'Failed to log workout preset.'
+      ),
+    },
+  });
+};
+
+export const useCreatePresetSessionMutation = () => {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: (payload: CreatePresetSessionRequest) =>
+      createPresetSession(payload),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: exerciseEntryKeys.byDate(variables.entry_date),
+      });
+      queryClient.invalidateQueries({
+        queryKey: exerciseEntryKeys.all,
+      });
+      queryClient.invalidateQueries({
+        queryKey: dailyProgressKeys.all,
+      });
+    },
+    meta: {
+      successMessage: t(
+        'diary.exerciseEntry.logPresetSuccess',
+        'Workout logged successfully.'
+      ),
+      errorMessage: t(
+        'diary.exerciseEntry.logPresetError',
+        'Failed to log workout.'
       ),
     },
   });

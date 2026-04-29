@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -8,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Dumbbell } from 'lucide-react';
+import { Dumbbell, Play } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveUser } from '@/contexts/ActiveUserContext';
 import EditExerciseEntryDialog from './EditExerciseEntryDialog';
@@ -31,7 +32,6 @@ import {
   useDeleteExerciseEntryMutation,
   useDeleteExercisePresetEntryMutation,
   useExerciseEntries,
-  useLogWorkoutPresetMutation,
 } from '@/hooks/Exercises/useExerciseEntries';
 import { useQueryClient } from '@tanstack/react-query';
 import { exerciseByIdOptions } from '@/hooks/Exercises/useExercises';
@@ -40,6 +40,12 @@ import {
   ExerciseEntry,
   GroupedExerciseEntry,
 } from '@/types/exercises';
+import {
+  createWorkoutPlaybackDraftFromPreset,
+  hasWorkoutPlaybackDraftForDate,
+  loadWorkoutPlaybackDraft,
+  saveWorkoutPlaybackDraft,
+} from '@/utils/workoutPlayback';
 
 // New interface for exercises coming from presets, where sets, reps, and weight are guaranteed
 interface PresetExerciseToLog extends Exercise {
@@ -61,6 +67,7 @@ const ExerciseCard = ({
   onExercisesLogged,
 }: ExerciseCardProps) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { activeUserId } = useActiveUser();
   const { loggingLevel, energyUnit, convertEnergy, getEnergyUnitString } =
@@ -86,6 +93,7 @@ const ExerciseCard = ({
   ] = useState(false);
   const [exerciseToEditInDatabase, setExerciseToEditInDatabase] =
     useState<Exercise | null>(null);
+  const [hasResumeWorkoutDraft, setHasResumeWorkoutDraft] = useState(false);
 
   const currentUserId = activeUserId || user?.id;
   debug(loggingLevel, 'Current user ID:', currentUserId);
@@ -94,12 +102,15 @@ const ExerciseCard = ({
   const { mutateAsync: deleteExerciseEntry } = useDeleteExerciseEntryMutation();
   const { mutateAsync: deleteExercisePresetEntry } =
     useDeleteExercisePresetEntryMutation();
-  const { mutateAsync: logWorkoutPreset } = useLogWorkoutPresetMutation();
 
   const { data: exerciseEntries, isLoading: loading } = useExerciseEntries(
     selectedDate,
     currentUserId
   );
+
+  useEffect(() => {
+    setHasResumeWorkoutDraft(hasWorkoutPlaybackDraftForDate(selectedDate));
+  }, [selectedDate]);
 
   // Effect to handle initialExercisesToLog prop
   useEffect(() => {
@@ -204,21 +215,37 @@ const ExerciseCard = ({
     setIsAddDialogOpen(false);
   };
 
-  const handleWorkoutPresetSelected = async (preset: WorkoutPreset) => {
+  const handleWorkoutPresetSelected = (preset: WorkoutPreset) => {
     debug(loggingLevel, 'Workout preset selected in ExerciseCard:', preset);
-    try {
-      await logWorkoutPreset({ presetId: preset.id, date: selectedDate });
-      handleCloseAddDialog(); // Close the add exercise dialog
-      onExercisesLogged(); // Signal to parent that exercises have been logged
-    } catch (err) {
-      error(
-        loggingLevel,
-        `Error logging workout preset "${preset.name}":`,
-        err
+    const existingDraft = loadWorkoutPlaybackDraft();
+    const existingMatchesPreset =
+      existingDraft &&
+      existingDraft.preset_id === String(preset.id) &&
+      existingDraft.entry_date === selectedDate;
+
+    if (existingDraft && !existingMatchesPreset) {
+      const shouldReplace = window.confirm(
+        t(
+          'exercise.workoutPlaybackDialog.replaceDraftConfirm',
+          'You already have an in-progress workout. Starting this one will replace it. Continue?'
+        )
       );
-    } finally {
-      setIsAddDialogOpen(false); // Close the add dialog
+      if (!shouldReplace) {
+        return;
+      }
     }
+
+    const nextDraft =
+      existingMatchesPreset && existingDraft
+        ? existingDraft
+        : createWorkoutPlaybackDraftFromPreset(preset, selectedDate);
+
+    saveWorkoutPlaybackDraft(nextDraft);
+    setHasResumeWorkoutDraft(true);
+    setIsAddDialogOpen(false);
+    navigate(`/workout-playback?date=${selectedDate}`, {
+      state: { returnTo: `/?date=${selectedDate}` },
+    });
   };
 
   const handleDeleteExerciseEntry = async (entryId: string) => {
@@ -381,18 +408,47 @@ const ExerciseCard = ({
           <CardTitle className="dark:text-slate-300">
             {t('exerciseCard.title', 'Exercise')}
           </CardTitle>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button size="default" onClick={handleOpenAddDialog}>
-                  <Dumbbell className="w-4 h-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>{t('exerciseCard.addExercise', 'Add Exercise')}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          <div className="flex items-center gap-2">
+            {hasResumeWorkoutDraft && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      size="default"
+                      onClick={() => {
+                        navigate(`/workout-playback?date=${selectedDate}`, {
+                          state: { returnTo: `/?date=${selectedDate}` },
+                        });
+                      }}
+                    >
+                      <Play className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>
+                      {t(
+                        'exerciseCard.resumeWorkout',
+                        'Resume in-progress workout'
+                      )}
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button size="default" onClick={handleOpenAddDialog}>
+                    <Dumbbell className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{t('exerciseCard.addExercise', 'Add Exercise')}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          </div>
           {/* Render the AddExerciseDialog directly. It manages its own Dialog/Content and headers. */}
           <AddExerciseDialog
             open={isAddDialogOpen}

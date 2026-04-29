@@ -8,6 +8,9 @@ import {
   ExerciseSessionResponse,
   exerciseSessionResponseSchema,
   ExerciseEntryResponse,
+  CreatePresetSessionRequest,
+  PresetSessionResponse,
+  presetSessionResponseSchema,
   CreateExerciseEntryRequest,
   UpdateExerciseEntryRequest,
   exerciseProgressResponseSchema,
@@ -107,6 +110,16 @@ export const logWorkoutPreset = async (
       entry_date: entryDate,
     }),
   });
+};
+
+export const createPresetSession = async (
+  payload: CreatePresetSessionRequest
+): Promise<PresetSessionResponse> => {
+  const response = await apiCall('/exercise-preset-entries', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+  return presetSessionResponseSchema.parse(response);
 };
 
 export const deleteExerciseEntry = async (entryId: string): Promise<void> => {
