@@ -1,8 +1,6 @@
 import type { CreatePresetSessionRequest } from '@workspace/shared';
 import type { WorkoutPreset, WorkoutPresetSet } from '@/types/workout';
 
-export const WORKOUT_PLAYBACK_STORAGE_KEY =
-  'sparkyfitness-workout-playback-draft-v1';
 export const DEFAULT_REST_SECONDS = 90;
 
 export type WorkoutPlaybackRestState = 'idle' | 'running' | 'paused';
@@ -52,6 +50,11 @@ export interface WorkoutPlaybackStats {
   totalSets: number;
   completedSets: number;
   completionRate: number;
+}
+
+export interface WorkoutPlaybackRouteState {
+  returnTo?: string;
+  draft?: WorkoutPlaybackDraft | null;
 }
 
 const DEFAULT_REST_TIMER: WorkoutPlaybackRestTimer = {
@@ -543,61 +546,4 @@ export function buildPresetSessionCreateRequestFromDraft(
     source: draft.source,
     exercises,
   };
-}
-
-function isDraftShape(value: unknown): value is WorkoutPlaybackDraft {
-  if (!value || typeof value !== 'object') return false;
-  const draft = value as Partial<WorkoutPlaybackDraft>;
-  return (
-    draft.version === 1 &&
-    typeof draft.preset_id === 'string' &&
-    typeof draft.name === 'string' &&
-    typeof draft.entry_date === 'string' &&
-    Array.isArray(draft.exercises)
-  );
-}
-
-export function loadWorkoutPlaybackDraft(): WorkoutPlaybackDraft | null {
-  if (typeof window === 'undefined') {
-    return null;
-  }
-
-  const raw = window.localStorage.getItem(WORKOUT_PLAYBACK_STORAGE_KEY);
-  if (!raw) {
-    return null;
-  }
-
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!isDraftShape(parsed)) {
-      return null;
-    }
-    return parsed;
-  } catch {
-    return null;
-  }
-}
-
-export function saveWorkoutPlaybackDraft(draft: WorkoutPlaybackDraft): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.setItem(
-    WORKOUT_PLAYBACK_STORAGE_KEY,
-    JSON.stringify(draft)
-  );
-}
-
-export function clearWorkoutPlaybackDraft(): void {
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  window.localStorage.removeItem(WORKOUT_PLAYBACK_STORAGE_KEY);
-}
-
-export function hasWorkoutPlaybackDraftForDate(entryDate: string): boolean {
-  const draft = loadWorkoutPlaybackDraft();
-  return !!draft && draft.entry_date === entryDate;
 }

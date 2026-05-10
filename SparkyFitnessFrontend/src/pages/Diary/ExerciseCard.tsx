@@ -9,7 +9,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Dumbbell, Play } from 'lucide-react';
+import { Dumbbell } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { useActiveUser } from '@/contexts/ActiveUserContext';
 import EditExerciseEntryDialog from './EditExerciseEntryDialog';
@@ -40,12 +40,7 @@ import {
   ExerciseEntry,
   GroupedExerciseEntry,
 } from '@/types/exercises';
-import {
-  createWorkoutPlaybackDraftFromPreset,
-  hasWorkoutPlaybackDraftForDate,
-  loadWorkoutPlaybackDraft,
-  saveWorkoutPlaybackDraft,
-} from '@/utils/workoutPlayback';
+import { createWorkoutPlaybackDraftFromPreset } from '@/utils/workoutPlayback';
 
 // New interface for exercises coming from presets, where sets, reps, and weight are guaranteed
 interface PresetExerciseToLog extends Exercise {
@@ -93,8 +88,6 @@ const ExerciseCard = ({
   ] = useState(false);
   const [exerciseToEditInDatabase, setExerciseToEditInDatabase] =
     useState<Exercise | null>(null);
-  const [hasResumeWorkoutDraft, setHasResumeWorkoutDraft] = useState(false);
-
   const currentUserId = activeUserId || user?.id;
   debug(loggingLevel, 'Current user ID:', currentUserId);
 
@@ -107,10 +100,6 @@ const ExerciseCard = ({
     selectedDate,
     currentUserId
   );
-
-  useEffect(() => {
-    setHasResumeWorkoutDraft(hasWorkoutPlaybackDraftForDate(selectedDate));
-  }, [selectedDate]);
 
   // Effect to handle initialExercisesToLog prop
   useEffect(() => {
@@ -217,34 +206,13 @@ const ExerciseCard = ({
 
   const handleWorkoutPresetSelected = (preset: WorkoutPreset) => {
     debug(loggingLevel, 'Workout preset selected in ExerciseCard:', preset);
-    const existingDraft = loadWorkoutPlaybackDraft();
-    const existingMatchesPreset =
-      existingDraft &&
-      existingDraft.preset_id === String(preset.id) &&
-      existingDraft.entry_date === selectedDate;
-
-    if (existingDraft && !existingMatchesPreset) {
-      const shouldReplace = window.confirm(
-        t(
-          'exercise.workoutPlaybackDialog.replaceDraftConfirm',
-          'You already have an in-progress workout. Starting this one will replace it. Continue?'
-        )
-      );
-      if (!shouldReplace) {
-        return;
-      }
-    }
-
-    const nextDraft =
-      existingMatchesPreset && existingDraft
-        ? existingDraft
-        : createWorkoutPlaybackDraftFromPreset(preset, selectedDate);
-
-    saveWorkoutPlaybackDraft(nextDraft);
-    setHasResumeWorkoutDraft(true);
+    const nextDraft = createWorkoutPlaybackDraftFromPreset(
+      preset,
+      selectedDate
+    );
     setIsAddDialogOpen(false);
     navigate(`/workout-playback?date=${selectedDate}`, {
-      state: { returnTo: `/?date=${selectedDate}` },
+      state: { returnTo: `/?date=${selectedDate}`, draft: nextDraft },
     });
   };
 
@@ -409,33 +377,6 @@ const ExerciseCard = ({
             {t('exerciseCard.title', 'Exercise')}
           </CardTitle>
           <div className="flex items-center gap-2">
-            {hasResumeWorkoutDraft && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="default"
-                      onClick={() => {
-                        navigate(`/workout-playback?date=${selectedDate}`, {
-                          state: { returnTo: `/?date=${selectedDate}` },
-                        });
-                      }}
-                    >
-                      <Play className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>
-                      {t(
-                        'exerciseCard.resumeWorkout',
-                        'Resume in-progress workout'
-                      )}
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

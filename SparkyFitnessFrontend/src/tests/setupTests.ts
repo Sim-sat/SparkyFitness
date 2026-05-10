@@ -6,6 +6,26 @@ if (typeof globalThis.TextEncoder === 'undefined') {
   globalThis.TextDecoder = TextDecoder as any;
 }
 
+// Suppress XMLHttpRequest errors from jsdom in test environment
+const originalError = console.error;
+beforeAll(() => {
+  console.error = (...args: any[]) => {
+    // Filter out jsdom XMLHttpRequest errors that are not relevant to tests
+    if (
+      args[0]?.message?.includes('AggregateError') ||
+      (args[0] === 'Error: AggregateError' &&
+        args[1]?.includes?.('XMLHttpRequest'))
+    ) {
+      return;
+    }
+    originalError.call(console, ...args);
+  };
+});
+
+afterAll(() => {
+  console.error = originalError;
+});
+
 // needed for useisMobile hook
 Object.defineProperty(window, 'matchMedia', {
   writable: true,

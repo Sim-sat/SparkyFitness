@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   AlertTriangle,
   ArrowLeft,
   ChevronDown,
-  ChevronUp,
   Flag,
   Pause,
   Play,
-  Plus,
   SkipForward,
   Timer,
   Trash2,
@@ -17,6 +15,7 @@ import {
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import ConfirmationDialog from '@/components/ui/ConfirmationDialog';
 import {
   Card,
   CardContent,
@@ -25,7 +24,6 @@ import {
 } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
@@ -47,25 +45,19 @@ import {
   DEFAULT_REST_SECONDS,
   addWorkoutSetToExercise,
   buildPresetSessionCreateRequestFromDraft,
-  clearWorkoutPlaybackDraft,
   completeCurrentWorkoutSet,
   getCurrentWorkoutSetPointer,
   getWorkoutPlaybackStats,
   isWorkoutPlaybackComplete,
-  loadWorkoutPlaybackDraft,
   removeWorkoutSetFromExercise,
-  saveWorkoutPlaybackDraft,
   setWorkoutPlaybackPointer,
   setWorkoutPlaybackRestTimer,
   toggleWorkoutSetCompletion,
+  type WorkoutPlaybackRouteState,
   type WorkoutPlaybackDraft,
   type WorkoutSetPointer,
   updateWorkoutSetAtPointer,
 } from '@/utils/workoutPlayback';
-
-interface WorkoutPlaybackRouteState {
-  returnTo?: string;
-}
 
 const REST_PRESETS = [30, 45, 60, 90, 120, 180, 300];
 const MIN_REST_SECONDS = 15;
@@ -92,6 +84,11 @@ function formatRestChip(seconds: number | null | undefined): string {
   return formatDurationClock(value);
 }
 
+function formatWorkoutWeight(totalWeight: number): string {
+  const rounded = Number(totalWeight.toFixed(1));
+  return `${rounded}`;
+}
+
 function clampRestSeconds(seconds: number): number {
   if (!Number.isFinite(seconds)) {
     return DEFAULT_REST_SECONDS;
@@ -105,9 +102,10 @@ function clampRestSeconds(seconds: number): number {
 }
 
 function getInitialDraft(
-  requestedDate: string | null
+  requestedDate: string | null,
+  routeState: WorkoutPlaybackRouteState | null
 ): WorkoutPlaybackDraft | null {
-  const existingDraft = loadWorkoutPlaybackDraft();
+  const existingDraft = routeState?.draft ?? null;
   if (!existingDraft) {
     return null;
   }
@@ -179,46 +177,43 @@ const WorkoutPlaybackPage = () => {
     (location.state as WorkoutPlaybackRouteState | null) ?? null;
   const returnPath = getReturnPath(requestedDate, routeState);
 
+  const scrubbedRouteStateRef = useRef(false);
   const [draft, setDraft] = useState<WorkoutPlaybackDraft | null>(() =>
-    getInitialDraft(requestedDate)
+    getInitialDraft(requestedDate, routeState)
   );
   const [saveError, setSaveError] = useState<string | null>(null);
   const [elapsedTickMs, setElapsedTickMs] = useState(() => Date.now());
-  const [exerciseVisibility, setExerciseVisibility] = useState<
-    Record<string, boolean>
-  >({});
   const [setNotesVisibility, setSetNotesVisibility] = useState<
     Record<string, boolean>
   >({});
   const [restEditorPointer, setRestEditorPointer] =
     useState<WorkoutSetPointer | null>(null);
   const [restEditorCustomValue, setRestEditorCustomValue] = useState('');
+  const [isDiscardDialogOpen, setIsDiscardDialogOpen] = useState(false);
 
   const { mutateAsync: createPresetSession, isPending: isSaving } =
     useCreatePresetSessionMutation();
 
-  // Memoize the payload state for debounced save
-  const draftForSave = useMemo(
-    () => ({
-      exercises: draft?.exercises,
-      notes: draft?.notes,
-      restState: draft?.rest_timer.state,
-    }),
-    [draft?.exercises, draft?.notes, draft?.rest_timer.state]
-  );
-
-  // Debounced save to localStorage - only on meaningful changes, not timer ticks
   useEffect(() => {
-    if (!draft) {
+    if (scrubbedRouteStateRef.current || !routeState?.draft) {
       return;
     }
 
-    const timer = setTimeout(() => {
-      saveWorkoutPlaybackDraft(draft);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [draftForSave, draft]);
+    scrubbedRouteStateRef.current = true;
+    navigate(`${location.pathname}${location.search}`, {
+      replace: true,
+      state: routeState.returnTo
+        ? { returnTo: routeState.returnTo }
+        : undefined,
+    });
+  }, [
+    location.pathname,
+    location.search,
+    navigate,
+    routeState,
+    routeState?.draft,
+    routeState?.returnTo,
+  ]);
 
   // Combined interval for both rest timer and elapsed time
   useEffect(() => {
@@ -251,9 +246,20 @@ const WorkoutPlaybackPage = () => {
     return getWorkoutPlaybackStats(draft);
   }, [draft]);
 
-  const currentPointer = useMemo(() => {
-    if (!draft) return null;
-    return getCurrentWorkoutSetPointer(draft);
+  const totalExercises = draft?.exercises.length ?? 0;
+
+  const totalWeight = useMemo(() => {
+    if (!draft) return 0;
+
+    return draft.exercises.reduce(
+      (exerciseSum, exercise) =>
+        exerciseSum +
+        exercise.sets.reduce(
+          (setSum, set) => setSum + (Number(set.weight) || 0),
+          0
+        ),
+      0
+    );
   }, [draft]);
 
   const elapsedSeconds = useMemo(() => {
@@ -331,10 +337,6 @@ const WorkoutPlaybackPage = () => {
 
   const handleSessionNotesChange = (value: string) => {
     updateDraft((currentDraft) => ({ ...currentDraft, notes: value }));
-  };
-
-  const toggleExerciseVisibility = (exerciseKey: string, open: boolean) => {
-    setExerciseVisibility((current) => ({ ...current, [exerciseKey]: open }));
   };
 
   const toggleSetNotesVisibility = (setKey: string) => {
@@ -427,20 +429,13 @@ const WorkoutPlaybackPage = () => {
   };
 
   const handleDiscard = () => {
-    const shouldDiscard = window.confirm(
-      t(
-        'exercise.workoutPlaybackDialog.discardConfirm',
-        'Discard this in-progress workout? This cannot be undone.'
-      )
-    );
+    setIsDiscardDialogOpen(true);
+  };
 
-    if (!shouldDiscard) {
-      return;
-    }
-
-    clearWorkoutPlaybackDraft();
+  const handleConfirmDiscard = () => {
     setDraft(null);
     setSaveError(null);
+    setIsDiscardDialogOpen(false);
     navigate(returnPath);
   };
 
@@ -460,7 +455,6 @@ const WorkoutPlaybackPage = () => {
 
     try {
       await createPresetSession(payload);
-      clearWorkoutPlaybackDraft();
       setDraft(null);
       setSaveError(null);
       navigate(returnPath, { replace: true });
@@ -503,6 +497,11 @@ const WorkoutPlaybackPage = () => {
     );
   }
 
+  const restRemaining = formatDurationClock(
+    draft?.rest_timer.remaining_seconds ?? 0
+  );
+  const isRestActive = draft && draft.rest_timer.state !== 'idle';
+
   return (
     <div className="mx-auto w-full max-w-5xl space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -540,43 +539,93 @@ const WorkoutPlaybackPage = () => {
         </div>
       </div>
 
-      <Card>
-        <CardHeader className="space-y-2">
-          <div>
-            <h1 className="text-2xl font-bold">{draft.name}</h1>
-            <CardDescription>
-              {t(
-                'exercise.workoutPlaybackPage.description',
-                'Track your sets live, follow rest countdowns, and save when you finish.'
-              )}
-            </CardDescription>
-          </div>
+      <Card className="border-0 bg-transparent shadow-none">
+        <CardHeader className="space-y-1 px-0 pb-2 pt-0">
+          <h1 className="text-sm font-semibold leading-tight">{draft.name}</h1>
+          <CardDescription className="text-[11px] leading-tight">
+            {t(
+              'exercise.workoutPlaybackPage.description',
+              'Track your sets live, follow rest countdowns, and save when you finish.'
+            )}
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="rounded-lg border bg-card p-3">
-              <div className="text-xs text-muted-foreground">
-                {t('exercise.workoutPlaybackPage.elapsedTime', 'Elapsed Time')}
-              </div>
-              <div className="mt-1 flex items-center gap-2 text-xl font-semibold tabular-nums">
-                <Timer className="h-4 w-4 text-muted-foreground" />
+        <CardContent className="space-y-1 px-0 pt-0">
+          <div className="grid w-full grid-cols-5 divide-x divide-border overflow-hidden rounded-sm border border-border/60 bg-background text-center">
+            <div className="flex min-w-0 flex-col items-center justify-center px-1 py-2">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('exercise.workoutPlaybackPage.elapsedTime', 'Duration')}
+              </span>
+              <span className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
                 {formatDurationClock(elapsedSeconds)}
-              </div>
+              </span>
             </div>
-            <div className="rounded-lg border bg-card p-3">
-              <div className="text-xs text-muted-foreground">
-                {t('exercise.workoutPlaybackPage.progress', 'Progress')}
-              </div>
-              <div className="mt-1 text-xl font-semibold tabular-nums">
-                {stats?.completedSets ?? 0}/{stats?.totalSets ?? 0}{' '}
-                {t('exercise.workoutPlaybackDialog.sets', 'sets')}
-              </div>
+            <div className="flex min-w-0 flex-col items-center justify-center px-1 py-2">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('exercise.workoutPlaybackPage.exercises', 'Exercises')}
+              </span>
+              <span className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+                {totalExercises}
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-col items-center justify-center px-1 py-2">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('exercise.workoutPlaybackPage.weight', 'Weight')}
+              </span>
+              <span className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+                {formatWorkoutWeight(totalWeight)}
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-col items-center justify-center px-1 py-2">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('exercise.workoutPlaybackPage.progress', 'Sets')}
+              </span>
+              <span className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+                {stats?.completedSets ?? 0}/{stats?.totalSets ?? 0}
+              </span>
+            </div>
+            <div className="flex min-w-0 flex-col items-center justify-center px-1 py-2">
+              <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                {t('exercise.workoutPlaybackPage.restTimer', 'Rest')}
+              </span>
+              <span className="mt-0.5 text-sm font-medium tabular-nums text-foreground">
+                {draft.rest_timer.state === 'idle' ? '0:00' : restRemaining}
+              </span>
+              {isRestActive && (
+                <div className="mt-1 flex items-center gap-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    aria-label={
+                      draft.rest_timer.state === 'running'
+                        ? t('common.pause', 'Pause')
+                        : t('common.resume', 'Resume')
+                    }
+                    onClick={handlePauseResumeRest}
+                  >
+                    {draft.rest_timer.state === 'running' ? (
+                      <Pause className="h-3 w-3" />
+                    ) : (
+                      <Play className="h-3 w-3" />
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-5 w-5"
+                    aria-label={t('common.skip', 'Skip')}
+                    onClick={handleSkipRest}
+                  >
+                    <SkipForward className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
-          <Progress value={(stats?.completionRate ?? 0) * 100} />
-
-          <div className="space-y-1.5">
+          <div className="space-y-1">
             <label className="text-sm font-medium">
               {t('exercise.logExerciseEntryDialog.sessionNotes', 'Notes')}
             </label>
@@ -601,7 +650,7 @@ const WorkoutPlaybackPage = () => {
         </CardContent>
       </Card>
 
-      <div className="space-y-3">
+      <div className="space-y-2">
         {draft.exercises.map((exercise, exerciseIndex) => {
           const completedSets = exercise.sets.filter(
             (set) => set.completed
@@ -609,61 +658,31 @@ const WorkoutPlaybackPage = () => {
           const totalSets = exercise.sets.length;
           const isComplete = totalSets > 0 && completedSets === totalSets;
           const exerciseKey = `${exercise.exercise_id}-${exerciseIndex}`;
-          const isExpanded = exerciseVisibility[exerciseKey] ?? !isComplete;
+          const isExpanded = !isComplete;
 
           return (
-            <Card key={`${exercise.exercise_id}-${exerciseIndex}`}>
-              <CardHeader className="py-3">
+            <Card
+              key={`${exercise.exercise_id}-${exerciseIndex}`}
+              className="shadow-none border-border/70"
+            >
+              <CardHeader className="py-2 px-3">
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="truncate text-sm font-semibold">
+                    <h3 className="truncate text-sm font-medium">
                       {exercise.exercise_name}
                     </h3>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground">
                       {completedSets}/{totalSets}{' '}
                       {t('exercise.workoutPlaybackDialog.sets', 'sets')}
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
-                    {isExpanded && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleAddSet(exerciseIndex)}
-                        aria-label={`Add set for ${exercise.exercise_name}`}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        {t('common.add', 'Add')}
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="cursor-pointer"
-                      onClick={() =>
-                        toggleExerciseVisibility(exerciseKey, !isExpanded)
-                      }
-                      aria-label={
-                        isExpanded
-                          ? `Collapse ${exercise.exercise_name}`
-                          : `Expand ${exercise.exercise_name}`
-                      }
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs font-medium ${
-                        isComplete
-                          ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
-                          : 'bg-muted text-muted-foreground'
+                  <div className="flex items-center gap-1.5">
+                    <ChevronDown
+                      className={`h-4 w-4 ${
+                        isComplete ? 'text-emerald-500' : 'rotate-180'
                       }`}
-                    >
+                    />
+                    <span className="text-[11px] text-muted-foreground">
                       {isComplete
                         ? t(
                             'exercise.workoutPlaybackPage.completed',
@@ -678,10 +697,10 @@ const WorkoutPlaybackPage = () => {
                 </div>
               </CardHeader>
               {isExpanded && (
-                <CardContent className="pt-0 pb-3">
-                  <div className="space-y-1.5">
-                    <div className="hidden sm:block overflow-x-auto px-3 pb-1">
-                      <div className="flex items-center gap-2 min-w-[810px] text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                <CardContent className="pt-0 pb-2 px-3">
+                  <div className="space-y-1">
+                    <div className="hidden sm:block overflow-x-auto pb-1">
+                      <div className="flex items-center gap-2 min-w-[640px] text-[10px] font-medium text-muted-foreground">
                         <div className="w-44">
                           {t('exercise.workoutPlaybackPage.columnSet', 'Set')}
                         </div>
@@ -710,102 +729,23 @@ const WorkoutPlaybackPage = () => {
                         exerciseIndex,
                         setIndex,
                       };
-                      const isActive =
-                        currentPointer?.exerciseIndex === exerciseIndex &&
-                        currentPointer?.setIndex === setIndex;
-                      const showInlineRestIndicator =
-                        draft.rest_timer.state !== 'idle' &&
-                        draft.rest_timer.target_exercise_index ===
-                          pointer.exerciseIndex &&
-                        draft.rest_timer.target_set_index === pointer.setIndex;
-
-                      const restProgress =
-                        draft.rest_timer.duration_seconds > 0
-                          ? (draft.rest_timer.remaining_seconds /
-                              draft.rest_timer.duration_seconds) *
-                            100
-                          : 0;
-
                       return (
                         <div
                           key={`${exercise.exercise_id}-${exerciseIndex}-${setIndex}`}
                         >
-                          {showInlineRestIndicator && (
-                            <div className="mb-1 rounded-md border border-amber-400/40 bg-amber-50/70 dark:bg-amber-950/25 p-2">
-                              <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-                                <span className="font-medium">
-                                  {t(
-                                    'exercise.workoutPlaybackPage.restBeforeSet',
-                                    'Rest before Set {{setNumber}}: {{time}}',
-                                    {
-                                      setNumber: set.set_number,
-                                      time: formatDurationClock(
-                                        draft.rest_timer.remaining_seconds
-                                      ),
-                                    }
-                                  )}
-                                </span>
-                                <div className="flex gap-2">
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handlePauseResumeRest}
-                                  >
-                                    {draft.rest_timer.state === 'running' ? (
-                                      <>
-                                        <Pause className="mr-1 h-4 w-4" />
-                                        {t('common.pause', 'Pause')}
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Play className="mr-1 h-4 w-4" />
-                                        {t('common.resume', 'Resume')}
-                                      </>
-                                    )}
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={handleSkipRest}
-                                  >
-                                    <SkipForward className="mr-1 h-4 w-4" />
-                                    {t('common.skip', 'Skip')}
-                                  </Button>
-                                </div>
-                              </div>
-                              <div className="mt-2">
-                                <Progress
-                                  value={restProgress}
-                                  className={
-                                    draft.rest_timer.state === 'running'
-                                      ? 'animate-pulse'
-                                      : undefined
-                                  }
-                                />
-                              </div>
-                            </div>
-                          )}
-
                           {/* Set card - no role="button" to avoid a11y violations */}
                           <div
-                            className={`w-full text-left rounded-md px-3 py-2 transition-all border ${
-                              isActive
-                                ? 'bg-primary/15 border-primary/50 ring-2 ring-primary/30'
-                                : 'hover:bg-muted border-transparent'
-                            } ${set.completed ? 'opacity-60' : ''}`}
+                            className={`w-full rounded-sm border px-2 py-1.5 text-left focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 ${
+                              set.completed
+                                ? 'border-border/60 bg-muted/40 text-muted-foreground'
+                                : 'border-border/70 bg-background'
+                            }`}
                           >
-                            <div className="space-y-2">
-                              <div className="overflow-x-auto">
-                                <div className="flex items-center gap-2 min-w-max md:min-w-[600px]">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    className={`px-2 py-1 h-auto ${
-                                      isActive ? 'font-semibold' : ''
-                                    }`}
+                            <div className="space-y-1.5">
+                              <div className="space-y-1.5">
+                                <div className="flex items-center justify-between gap-2 md:hidden">
+                                  <div
+                                    className="flex cursor-pointer items-center gap-2 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
                                     aria-label={`Select set ${set.set_number} for ${exercise.exercise_name}`}
                                     onClick={() => {
                                       updateDraft((currentDraft) =>
@@ -815,137 +755,47 @@ const WorkoutPlaybackPage = () => {
                                         )
                                       );
                                     }}
+                                    onKeyDown={(event) => {
+                                      if (
+                                        event.key === 'Enter' ||
+                                        event.key === ' '
+                                      ) {
+                                        event.preventDefault();
+                                        updateDraft((currentDraft) =>
+                                          setWorkoutPlaybackPointer(
+                                            currentDraft,
+                                            pointer
+                                          )
+                                        );
+                                      }
+                                    }}
+                                    role="button"
+                                    tabIndex={0}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <Checkbox
-                                        aria-label={`Complete set ${set.set_number}`}
-                                        checked={set.completed}
-                                        onClick={(event) => {
-                                          event.stopPropagation();
-                                        }}
-                                        onCheckedChange={(checked) => {
-                                          if (checked === true) {
-                                            handleCompleteSet(pointer);
-                                          } else {
-                                            handleUncompleteSet(pointer);
-                                          }
-                                        }}
-                                      />
-                                      <span className="text-sm font-medium">
-                                        {t(
-                                          'exercise.workoutPlaybackDialog.setRow',
-                                          'Set {{setNumber}}',
-                                          { setNumber: set.set_number }
-                                        )}
-                                      </span>
-                                    </div>
-                                  </Button>
-
-                                  <div className="w-44">
-                                    <Select
-                                      value={set.set_type ?? 'Working Set'}
-                                      onValueChange={(value) =>
-                                        handleSetFieldChange(
-                                          pointer,
-                                          'set_type',
-                                          value
-                                        )
-                                      }
-                                    >
-                                      <SelectTrigger
-                                        aria-label={`Type set ${set.set_number}`}
-                                        onClick={(event) =>
-                                          event.stopPropagation()
-                                        }
-                                      >
-                                        <SelectValue />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {excerciseWorkoutSetTypes.map(
-                                          (type) => (
-                                            <SelectItem key={type} value={type}>
-                                              {t(
-                                                `workout.setType.${type}`,
-                                                type
-                                              )}
-                                            </SelectItem>
-                                          )
-                                        )}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-
-                                  <div className="w-24">
-                                    <Input
-                                      type="number"
-                                      inputMode="numeric"
-                                      min={0}
-                                      step={1}
-                                      aria-label={`Reps set ${set.set_number}`}
-                                      value={set.reps ?? ''}
-                                      onClick={(event) =>
-                                        event.stopPropagation()
-                                      }
-                                      onChange={(event) =>
-                                        handleSetFieldChange(
-                                          pointer,
-                                          'reps',
-                                          parseNullableNumber(
-                                            event.target.value
-                                          )
-                                        )
-                                      }
-                                      placeholder={t('common.reps', 'reps')}
-                                      className="border-0 bg-transparent"
-                                    />
-                                  </div>
-
-                                  <div className="w-28">
-                                    <Input
-                                      type="number"
-                                      inputMode="decimal"
-                                      min={0}
-                                      step={0.5}
-                                      aria-label={`Weight set ${set.set_number}`}
-                                      value={set.weight ?? ''}
-                                      onClick={(event) =>
-                                        event.stopPropagation()
-                                      }
-                                      onChange={(event) =>
-                                        handleSetFieldChange(
-                                          pointer,
-                                          'weight',
-                                          parseNullableNumber(
-                                            event.target.value
-                                          )
-                                        )
-                                      }
-                                      placeholder={t('common.weight', 'Weight')}
-                                      className="border-0 bg-transparent"
-                                    />
-                                  </div>
-
-                                  <div className="w-32">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      className="w-full justify-start px-2 tabular-nums"
-                                      aria-label={`Edit rest for set ${set.set_number}`}
+                                    <Checkbox
+                                      aria-label={`Complete set ${set.set_number}`}
+                                      checked={set.completed}
+                                      className="data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white"
                                       onClick={(event) => {
                                         event.stopPropagation();
-                                        handleOpenRestEditor(pointer);
                                       }}
-                                    >
-                                      <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                                      onCheckedChange={(checked) => {
+                                        if (checked === true) {
+                                          handleCompleteSet(pointer);
+                                        } else {
+                                          handleUncompleteSet(pointer);
+                                        }
+                                      }}
+                                    />
+                                    <span className="text-sm font-medium">
                                       {t(
-                                        'exercise.workoutPlaybackPage.restChipLabel',
-                                        'Rest · {{time}}',
-                                        { time: formatRestChip(set.rest_time) }
+                                        'exercise.workoutPlaybackDialog.setRow',
+                                        'Set {{setNumber}}',
+                                        { setNumber: set.set_number }
                                       )}
-                                    </Button>
+                                    </span>
                                   </div>
-
-                                  <div className="w-20 flex items-center justify-end gap-0.5">
+                                  <div className="flex items-center gap-1">
                                     <Button
                                       type="button"
                                       variant="ghost"
@@ -977,6 +827,307 @@ const WorkoutPlaybackPage = () => {
                                     </Button>
                                   </div>
                                 </div>
+
+                                <div className="grid grid-cols-2 gap-2 md:hidden">
+                                  <div className="col-span-2">
+                                    <Select
+                                      value={set.set_type ?? 'Working Set'}
+                                      onValueChange={(value) =>
+                                        handleSetFieldChange(
+                                          pointer,
+                                          'set_type',
+                                          value
+                                        )
+                                      }
+                                    >
+                                      <SelectTrigger
+                                        aria-label={`Type set ${set.set_number}`}
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                        className="!border-border/70 !bg-transparent !shadow-none !outline-none !ring-0 focus:!border-border/70 focus:!outline-none focus:!ring-0 focus-visible:!border-border/70 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 data-[state=open]:!border-border/70 data-[state=open]:!outline-none data-[state=open]:!ring-0 data-[state=open]:!shadow-none"
+                                        style={{
+                                          boxShadow: 'none',
+                                          outline: 'none',
+                                        }}
+                                      >
+                                        <SelectValue />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {excerciseWorkoutSetTypes.map(
+                                          (type) => (
+                                            <SelectItem key={type} value={type}>
+                                              {t(
+                                                `workout.setType.${type}`,
+                                                type
+                                              )}
+                                            </SelectItem>
+                                          )
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <Input
+                                    type="number"
+                                    inputMode="numeric"
+                                    min={0}
+                                    step={1}
+                                    aria-label={`Reps set ${set.set_number}`}
+                                    value={set.reps ?? ''}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onChange={(event) =>
+                                      handleSetFieldChange(
+                                        pointer,
+                                        'reps',
+                                        parseNullableNumber(event.target.value)
+                                      )
+                                    }
+                                    placeholder={t('common.reps', 'reps')}
+                                    className="focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                  />
+                                  <Input
+                                    type="number"
+                                    inputMode="decimal"
+                                    min={0}
+                                    step={0.5}
+                                    aria-label={`Weight set ${set.set_number}`}
+                                    value={set.weight ?? ''}
+                                    onClick={(event) => event.stopPropagation()}
+                                    onChange={(event) =>
+                                      handleSetFieldChange(
+                                        pointer,
+                                        'weight',
+                                        parseNullableNumber(event.target.value)
+                                      )
+                                    }
+                                    placeholder={t('common.weight', 'Weight')}
+                                    className="focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                  />
+                                  <div className="col-span-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      className="w-full justify-start px-2 tabular-nums"
+                                      aria-label={`Edit rest for set ${set.set_number}`}
+                                      onClick={(event) => {
+                                        event.stopPropagation();
+                                        handleOpenRestEditor(pointer);
+                                      }}
+                                    >
+                                      <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                                      {t(
+                                        'exercise.workoutPlaybackPage.restChipLabel',
+                                        'Rest · {{time}}',
+                                        { time: formatRestChip(set.rest_time) }
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+
+                                <div className="hidden overflow-x-auto md:block">
+                                  <div className="flex items-center gap-2 min-w-[600px]">
+                                    <div
+                                      className="w-44 flex cursor-pointer items-center gap-2 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                      aria-label={`Select set ${set.set_number} for ${exercise.exercise_name}`}
+                                      onClick={() => {
+                                        updateDraft((currentDraft) =>
+                                          setWorkoutPlaybackPointer(
+                                            currentDraft,
+                                            pointer
+                                          )
+                                        );
+                                      }}
+                                      onKeyDown={(event) => {
+                                        if (
+                                          event.key === 'Enter' ||
+                                          event.key === ' '
+                                        ) {
+                                          event.preventDefault();
+                                          updateDraft((currentDraft) =>
+                                            setWorkoutPlaybackPointer(
+                                              currentDraft,
+                                              pointer
+                                            )
+                                          );
+                                        }
+                                      }}
+                                      role="button"
+                                      tabIndex={0}
+                                    >
+                                      <Checkbox
+                                        aria-label={`Complete set ${set.set_number}`}
+                                        checked={set.completed}
+                                        className="data-[state=checked]:border-emerald-500 data-[state=checked]:bg-emerald-500 data-[state=checked]:text-white"
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                        }}
+                                        onCheckedChange={(checked) => {
+                                          if (checked === true) {
+                                            handleCompleteSet(pointer);
+                                          } else {
+                                            handleUncompleteSet(pointer);
+                                          }
+                                        }}
+                                      />
+                                      <span className="text-sm font-medium">
+                                        {t(
+                                          'exercise.workoutPlaybackDialog.setRow',
+                                          'Set {{setNumber}}',
+                                          { setNumber: set.set_number }
+                                        )}
+                                      </span>
+                                    </div>
+
+                                    <div className="w-44">
+                                      <Select
+                                        value={set.set_type ?? 'Working Set'}
+                                        onValueChange={(value) =>
+                                          handleSetFieldChange(
+                                            pointer,
+                                            'set_type',
+                                            value
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger
+                                          aria-label={`Type set ${set.set_number}`}
+                                          onClick={(event) =>
+                                            event.stopPropagation()
+                                          }
+                                          className="!border-border/70 !bg-transparent !shadow-none !outline-none !ring-0 focus:!border-border/70 focus:!outline-none focus:!ring-0 focus-visible:!border-border/70 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 data-[state=open]:!border-border/70 data-[state=open]:!outline-none data-[state=open]:!ring-0 data-[state=open]:!shadow-none"
+                                          style={{
+                                            boxShadow: 'none',
+                                            outline: 'none',
+                                          }}
+                                        >
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {excerciseWorkoutSetTypes.map(
+                                            (type) => (
+                                              <SelectItem
+                                                key={type}
+                                                value={type}
+                                              >
+                                                {t(
+                                                  `workout.setType.${type}`,
+                                                  type
+                                                )}
+                                              </SelectItem>
+                                            )
+                                          )}
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+
+                                    <div className="w-24">
+                                      <Input
+                                        type="number"
+                                        inputMode="numeric"
+                                        min={0}
+                                        step={1}
+                                        aria-label={`Reps set ${set.set_number}`}
+                                        value={set.reps ?? ''}
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                        onChange={(event) =>
+                                          handleSetFieldChange(
+                                            pointer,
+                                            'reps',
+                                            parseNullableNumber(
+                                              event.target.value
+                                            )
+                                          )
+                                        }
+                                        placeholder={t('common.reps', 'reps')}
+                                        className="focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                      />
+                                    </div>
+
+                                    <div className="w-28">
+                                      <Input
+                                        type="number"
+                                        inputMode="decimal"
+                                        min={0}
+                                        step={0.5}
+                                        aria-label={`Weight set ${set.set_number}`}
+                                        value={set.weight ?? ''}
+                                        onClick={(event) =>
+                                          event.stopPropagation()
+                                        }
+                                        onChange={(event) =>
+                                          handleSetFieldChange(
+                                            pointer,
+                                            'weight',
+                                            parseNullableNumber(
+                                              event.target.value
+                                            )
+                                          )
+                                        }
+                                        placeholder={t(
+                                          'common.weight',
+                                          'Weight'
+                                        )}
+                                        className="focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
+                                      />
+                                    </div>
+
+                                    <div className="w-32">
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="w-full justify-start px-2 tabular-nums"
+                                        aria-label={`Edit rest for set ${set.set_number}`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleOpenRestEditor(pointer);
+                                        }}
+                                      >
+                                        <Timer className="h-3.5 w-3.5 text-muted-foreground" />
+                                        {t(
+                                          'exercise.workoutPlaybackPage.restChipLabel',
+                                          'Rest · {{time}}',
+                                          {
+                                            time: formatRestChip(set.rest_time),
+                                          }
+                                        )}
+                                      </Button>
+                                    </div>
+
+                                    <div className="w-32 flex items-center justify-end gap-0.5">
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="cursor-pointer"
+                                        aria-label={`Toggle notes for set ${set.set_number}`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          toggleSetNotesVisibility(
+                                            `${exerciseKey}-${setIndex}`
+                                          );
+                                        }}
+                                      >
+                                        <MessageSquare className="h-4 w-4" />
+                                      </Button>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="cursor-pointer"
+                                        disabled={exercise.sets.length <= 1}
+                                        aria-label={`Remove set ${set.set_number} for ${exercise.exercise_name}`}
+                                        onClick={(event) => {
+                                          event.stopPropagation();
+                                          handleRemoveSet(pointer);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
 
                               {setNotesVisibility[
@@ -997,7 +1148,7 @@ const WorkoutPlaybackPage = () => {
                                     'workout.notesPlaceholder',
                                     'Add a note for this set...'
                                   )}
-                                  className="border-0 bg-transparent"
+                                  className="focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 resize-none text-sm"
                                 />
                               )}
                             </div>
@@ -1006,6 +1157,20 @@ const WorkoutPlaybackPage = () => {
                       );
                     })}
                   </div>
+                  {isExpanded && (
+                    <div className="pt-1 flex justify-center">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-0 text-xs text-muted-foreground shadow-none hover:bg-transparent hover:text-foreground"
+                        onClick={() => handleAddSet(exerciseIndex)}
+                        aria-label={`Add set for ${exercise.exercise_name}`}
+                      >
+                        Add Set
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               )}
             </Card>
@@ -1076,6 +1241,19 @@ const WorkoutPlaybackPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ConfirmationDialog
+        open={isDiscardDialogOpen}
+        onOpenChange={setIsDiscardDialogOpen}
+        onConfirm={handleConfirmDiscard}
+        title={t('exercise.workoutPlaybackDialog.discard', 'Discard')}
+        description={t(
+          'exercise.workoutPlaybackDialog.discardConfirm',
+          'Discard this in-progress workout? This cannot be undone.'
+        )}
+        variant="destructive"
+        confirmLabel={t('exercise.workoutPlaybackDialog.discard', 'Discard')}
+      />
     </div>
   );
 };

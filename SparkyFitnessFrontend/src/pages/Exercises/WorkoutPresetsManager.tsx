@@ -37,11 +37,7 @@ import {
 } from '@/hooks/Exercises/useWorkoutPresets';
 import { useLogWorkoutPresetMutation } from '@/hooks/Exercises/useExerciseEntries';
 import { usePreferences } from '@/contexts/PreferencesContext';
-import {
-  createWorkoutPlaybackDraftFromPreset,
-  loadWorkoutPlaybackDraft,
-  saveWorkoutPlaybackDraft,
-} from '@/utils/workoutPlayback';
+import { createWorkoutPlaybackDraftFromPreset } from '@/utils/workoutPlayback';
 
 import { useBulkSelection } from '@/hooks/useBulkSelection';
 import BulkActionToolbar from '@/components/BulkActionToolbar';
@@ -169,35 +165,15 @@ const WorkoutPresetsManager = () => {
   const handleStartWorkoutPlayback = React.useCallback(
     (preset: WorkoutPreset) => {
       const today = formatDateToYYYYMMDD(new Date());
-      const existingDraft = loadWorkoutPlaybackDraft();
-      const existingMatchesPreset =
-        existingDraft &&
-        existingDraft.preset_id === String(preset.id) &&
-        existingDraft.entry_date === today;
-
-      if (existingDraft && !existingMatchesPreset) {
-        const shouldReplace = window.confirm(
-          t(
-            'exercise.workoutPlaybackDialog.replaceDraftConfirm',
-            'You already have an in-progress workout. Starting this one will replace it. Continue?'
-          )
-        );
-        if (!shouldReplace) {
-          return;
-        }
-      }
-
-      const nextDraft =
-        existingMatchesPreset && existingDraft
-          ? existingDraft
-          : createWorkoutPlaybackDraftFromPreset(preset, today);
-
-      saveWorkoutPlaybackDraft(nextDraft);
+      const nextDraft = createWorkoutPlaybackDraftFromPreset(preset, today);
       navigate(`/workout-playback?date=${today}`, {
-        state: { returnTo: `${location.pathname}${location.search}` },
+        state: {
+          returnTo: `${location.pathname}${location.search}`,
+          draft: nextDraft,
+        },
       });
     },
-    [location.pathname, location.search, navigate, t]
+    [location.pathname, location.search, navigate]
   );
 
   const columns = React.useMemo<ColumnDef<WorkoutPreset>[]>(
