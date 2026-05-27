@@ -1,10 +1,12 @@
 import { apiCall } from '@/api/api';
 import { preferencesKeys } from '@/api/keys/settings';
 import { upsertUserPreferences } from '@/api/Settings/preferences';
+import { getErrorMessage } from '@/utils/api';
 import {
   useQueryClient,
   useMutation,
   queryOptions,
+  useQuery,
 } from '@tanstack/react-query';
 
 export const preferencesOptions = {
@@ -40,3 +42,20 @@ export const useUpdatePreferencesMutation = () => {
     },
   });
 };
+
+export const useNutrientsPreferencesQuery = (enabled = true) =>
+  useQuery({
+    ...preferencesOptions.nutrients(),
+    enabled,
+  });
+
+export const useUserPreferencesQuery = (enabled = true) =>
+  useQuery({
+    ...preferencesOptions.user(),
+    enabled,
+    retry: (failureCount, err) => {
+      const msg = getErrorMessage(err);
+      if (msg?.includes('404')) return false;
+      return failureCount < 2;
+    },
+  });
